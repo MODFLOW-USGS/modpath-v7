@@ -1,0 +1,13 @@
+BEGIN Options
+  LIST       ex04_mf6.lst
+END Options
+
+BEGIN Packages
+  DISV6      ex04_mf6.disv
+  IC6        ex04_mf6.ic
+  NPF6       ex04_mf6.npf
+  OC6        ex04_mf6.oc
+  WEL6       ex04_mf6.wel
+  CHD6       ex04_mf6.chd
+END Packages
+

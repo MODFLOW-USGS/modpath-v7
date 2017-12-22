@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VisualStudioProject ProjectCreator="Intel Fortran" Keyword="Console Application" Version="11.0" ProjectIdGuid="{D8FA658B-7D99-459D-B95A-E5D88487A19C}">
+	<Platforms>
+		<Platform Name="Win32"/>
+		<Platform Name="x64"/></Platforms>
+	<Configurations>
+		<Configuration Name="Debug|Win32" OutputDirectory="bin\$(PlatformName)\$(ConfigurationName)" IntermediateDirectory="bin\$(PlatformName)\$(ConfigurationName)\objdir" TargetName="$(ProjectName)_win32">
+				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" DebugInformationFormat="debugEnabled" Optimization="optimizeDisabled" HeapArrays="0" WarnInterfaces="true" Traceback="true" BoundsCheck="true" RuntimeLibrary="rtMultiThreadedDebug"/>
+				<Tool Name="VFLinkerTool" LinkIncremental="linkIncrementalNo" SuppressStartupBanner="true" GenerateManifest="false" GenerateDebugInformation="true" SubSystem="subSystemConsole"/>
+				<Tool Name="VFResourceCompilerTool"/>
+				<Tool Name="VFMidlTool" SuppressStartupBanner="true"/>
+				<Tool Name="VFCustomBuildTool"/>
+				<Tool Name="VFPreLinkEventTool"/>
+				<Tool Name="VFPreBuildEventTool"/>
+				<Tool Name="VFPostBuildEventTool"/>
+				<Tool Name="VFManifestTool" SuppressStartupBanner="true" EmbedManifest="false"/></Configuration>
+		<Configuration Name="Release|Win32" OutputDirectory="bin\$(PlatformName)\$(ConfigurationName)" IntermediateDirectory="bin\$(PlatformName)\$(ConfigurationName)\objdir" TargetName="$(ProjectName)_win32">
+				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true"/>
+				<Tool Name="VFLinkerTool" LinkIncremental="linkIncrementalNo" SuppressStartupBanner="true" GenerateManifest="false" SubSystem="subSystemConsole"/>
+				<Tool Name="VFResourceCompilerTool"/>
+				<Tool Name="VFMidlTool" SuppressStartupBanner="true"/>
+				<Tool Name="VFCustomBuildTool"/>
+				<Tool Name="VFPreLinkEventTool"/>
+				<Tool Name="VFPreBuildEventTool"/>
+				<Tool Name="VFPostBuildEventTool"/>
+				<Tool Name="VFManifestTool" SuppressStartupBanner="true"/></Configuration>
+		<Configuration Name="Debug|x64" OutputDirectory="bin\$(PlatformName)\$(ConfigurationName)" IntermediateDirectory="bin\$(PlatformName)\$(ConfigurationName)\objdir">
+				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" DebugInformationFormat="debugEnabled" Optimization="optimizeDisabled" HeapArrays="0" WarnInterfaces="true" Traceback="true" BoundsCheck="true" RuntimeLibrary="rtMultiThreadedDebug"/>
+				<Tool Name="VFLinkerTool" LinkIncremental="linkIncrementalNo" SuppressStartupBanner="true" GenerateManifest="false" GenerateDebugInformation="true" SubSystem="subSystemConsole"/>
+				<Tool Name="VFResourceCompilerTool"/>
+				<Tool Name="VFMidlTool" SuppressStartupBanner="true" TargetEnvironment="midlTargetAMD64"/>
+				<Tool Name="VFCustomBuildTool"/>
+				<Tool Name="VFPreLinkEventTool"/>
+				<Tool Name="VFPreBuildEventTool"/>
+				<Tool Name="VFPostBuildEventTool"/>
+				<Tool Name="VFManifestTool" SuppressStartupBanner="true" EmbedManifest="false"/></Configuration>
+		<Configuration Name="Release|x64" OutputDirectory="bin\$(PlatformName)\$(ConfigurationName)" IntermediateDirectory="bin\$(PlatformName)\$(ConfigurationName)\objdir">
+				<Tool Name="VFFortranCompilerTool" SuppressStartupBanner="true" HeapArrays="0"/>
+				<Tool Name="VFLinkerTool" LinkIncremental="linkIncrementalNo" SuppressStartupBanner="true" GenerateManifest="false" SubSystem="subSystemConsole"/>
+				<Tool Name="VFResourceCompilerTool"/>
+				<Tool Name="VFMidlTool" SuppressStartupBanner="true" TargetEnvironment="midlTargetAMD64"/>
+				<Tool Name="VFCustomBuildTool"/>
+				<Tool Name="VFPreLinkEventTool"/>
+				<Tool Name="VFPreBuildEventTool"/>
+				<Tool Name="VFPostBuildEventTool"/>
+				<Tool Name="VFManifestTool" SuppressStartupBanner="true"/></Configuration></Configurations>
+	<Files>
+		<Filter Name="Header Files" Filter="fi;fd"/>
+		<Filter Name="Resource Files" Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"/>
+		<Filter Name="Source Files" Filter="f90;for;f;fpp;ftn;def;odl;idl">
+		<File RelativePath="..\source\BudgetListItem.f90"/>
+		<File RelativePath="..\source\BudgetReader.f90"/>
+		<File RelativePath="..\source\BudgetRecordHeader.f90"/>
+		<File RelativePath="..\source\compilerversion.fpp"/>
+		<File RelativePath="..\source\Coordinate.f90"/>
+		<File RelativePath="..\source\GeoReference.f90"/>
+		<File RelativePath="..\source\GlobalData.f90"/>
+		<File RelativePath="..\source\GridLocation.f90"/>
+		<File RelativePath="..\source\GridLocationList.f90"/>
+		<File RelativePath="..\source\HeadReader.f90"/>
+		<File RelativePath="..\source\HeadRecordHeader.f90"/>
+		<File RelativePath="..\source\ModflowGrid.f90"/>
+		<File RelativePath="..\source\ModflowRectangularGrid.f90"/>
+		<File RelativePath="..\source\ModpathBasicData.f90"/>
+		<File RelativePath="..\source\ModpathCellData.f90"/>
+		<File RelativePath="..\source\ModpathCellDataContainer.f90"/>
+		<File RelativePath="..\source\ModpathSimulationData.f90"/>
+		<File RelativePath="..\source\ModpathSubCellData.f90"/>
+		<File RelativePath="..\source\ModpathUnstructuredBasicData.f90"/>
+		<File RelativePath="..\source\MPath7.f90"/>
+		<File RelativePath="..\source\openspec.f90"/>
+		<File RelativePath="..\source\Particle.f90"/>
+		<File RelativePath="..\source\ParticleCoordinate.f90"/>
+		<File RelativePath="..\source\ParticleCoordinateList.f90"/>
+		<File RelativePath="..\source\ParticleGroup.f90"/>
+		<File RelativePath="..\source\ParticleLocation.f90"/>
+		<File RelativePath="..\source\ParticleLocationList.f90"/>
+		<File RelativePath="..\source\ParticleLocationPtr.f90"/>
+		<File RelativePath="..\source\ParticleManager.f90"/>
+		<File RelativePath="..\source\ParticlePath.f90"/>
+		<File RelativePath="..\source\ParticleTrackingEngine.f90"/>
+		<File RelativePath="..\source\ParticleTrackingOptions.f90"/>
+		<File RelativePath="..\source\RectangularGridDis.f90"/>
+		<File RelativePath="..\source\RectangularGridDisMf6.f90"/>
+		<File RelativePath="..\source\RectangularGridDisuMf6.f90"/>
+		<File RelativePath="..\source\RectangularGridDisuMfusg.f90"/>
+		<File RelativePath="..\source\RectangularGridDisvMf6.f90"/>
+		<File RelativePath="..\source\StartingLocationReader.f90"/>
+		<File RelativePath="..\source\TimeDiscretizationData.f90"/>
+		<File RelativePath="..\source\TrackCell.f90"/>
+		<File RelativePath="..\source\TrackCellOptions.f90"/>
+		<File RelativePath="..\source\TrackCellResult.f90"/>
+		<File RelativePath="..\source\TrackPathResult.f90"/>
+		<File RelativePath="..\source\TrackSubCell.f90"/>
+		<File RelativePath="..\source\TrackSubCellResult.f90"/>
+		<File RelativePath="..\source\UtilMisc.f90"/>
+		<File RelativePath="..\source\utl7.f"/>
+		<File RelativePath="..\source\utl8.f90"/></Filter>
+		<File RelativePath=".\ReadMe.txt"/></Files>
+	<Globals/></VisualStudioProject>

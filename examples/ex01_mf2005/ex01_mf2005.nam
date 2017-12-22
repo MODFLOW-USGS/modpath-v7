@@ -1,0 +1,11 @@
+LIST                  2 ex01_mf2005.LST
+DIS                   3 ex01_mf2005.DIS
+BAS6                  4 ex01_mf2005.BA6
+WEL                  12 ex01_mf2005.WEL
+RIV                  14 ex01_mf2005.RIV
+RCH                  18 ex01_mf2005.RCH
+OC                   22 ex01_mf2005.OC
+PCG                  23 ex01_mf2005.PCG
+LPF                  33 ex01_mf2005.LPF
+DATA(BINARY)         50 ex01_mf2005.HED
+DATA(BINARY)         53 ex01_mf2005.BUD

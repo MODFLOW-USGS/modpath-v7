@@ -1,0 +1,12 @@
+LIST	         2 ex02_mfusg.list
+DISU          11 ex02_mfusg.disu 
+BAS6          13 ex02_mfusg.bas 
+LPF           15 ex02_mfusg.lpf 
+OC            14 ex02_mfusg.oc 
+RCH           16 ex02_mfusg.rch
+WEL           17 ex02_mfusg.wel
+RIV           18 ex02_mfusg.riv
+DATA(BINARY)  51 ex02_mfusg.hed REPLACE
+DATA(BINARY)  50 ex02_mfusg.bud REPLACE
+SMS           27 ex02_mfusg.sms
+GNC           30 ex02_mfusg.gnc

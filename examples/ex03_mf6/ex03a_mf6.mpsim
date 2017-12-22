@@ -1,0 +1,22 @@
+ex03_mf6.mpnam
+ex03a_mf6.mplist
+3 1 1 1 1 0
+ex03a_mf6.endpoint7
+ex03a_mf6.timeseries7
+0
+2
+1 1 0.9
+2
+1
+30 2000.
+2
+0
+OPEN/CLOSE  zones_layer_1.csv  1  (FREE)  4
+CONSTANT 1
+OPEN/CLOSE  zones_layer_3.csv  1  (FREE)  4
+1
+1
+PG1
+2
+10 0.0 20.
+external ex03a_mf6.sloc

@@ -1,0 +1,19 @@
+ex01_mf2005.mpnam
+ex01b_mf2005.mplist
+1 1 1 1 1 0
+ex01b_mf2005.endpoint7
+0
+1 
+0.0
+2
+2 
+0 
+CONSTANT 1
+CONSTANT 1
+OPEN/CLOSE zones_layer_3.txt 1 '(15i2)' 0
+1 
+1 
+PG1
+1
+0.0
+external ex01b_mf2005.sloc
