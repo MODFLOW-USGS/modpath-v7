@@ -1,0 +1,25 @@
+begin options
+  PRINT_INPUT
+  PRINT_FLOWS
+  SAVE_FLOWS
+  AUXILIARY IFACE
+end options
+
+begin dimensions
+  MAXBOUND 11
+end dimensions
+
+begin period 1
+# river
+ 1 15 10   322.5    100000.   6
+ 1 15 11   322.5    100000.   6
+ 1 15 12   322.5    100000.   6
+ 1 15 13   322.5    100000.   6
+ 1 15 14   322.5    100000.   6
+ 1 15 15   322.5    100000.   6
+ 1 15 16   322.5    100000.   6
+ 1 15 17   322.5    100000.   6
+ 1 15 18   322.5    100000.   6
+ 1 15 19   322.5    100000.   6
+ 1 15 20   322.5    100000.   6
+end period

@@ -1,0 +1,19 @@
+ex02_mf6.mpnam
+ex02b_mf6.mplist
+1 2 1 1 1 0
+ex02b_mf6.endpoint7
+0
+1 
+0.0
+2
+2 
+0 
+CONSTANT 1
+CONSTANT 1
+OPEN/CLOSE  zones_layer_3.csv  1  (FREE)  3
+1 
+1 
+PG1
+1
+0.0
+external ex02b_mf6.sloc

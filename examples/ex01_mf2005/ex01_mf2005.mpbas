@@ -1,0 +1,16 @@
+# Example 1: MODPATH basic data file
+# MODFLOW-2005 version
+1.0E+20  1.0E+30  HNOFLO HDRY
+2                 DEFAULT IFACE COUNT
+RECHARGE
+6                 DEFAULT IFACE
+ET
+6                 DEFAULT IFACE
+1 0 0             LAYTYP
+CONSTANT 1        IBOUNDMP Layer 1
+CONSTANT 1        IBOUNDMP Layer 2
+CONSTANT 1        IBOUNDMP Layer 3
+CONSTANT 0.1      POROSITY Layer 1
+CONSTANT 0.1      POROSITY Layer 2
+CONSTANT 0.1      POROSITY Layer 3
+

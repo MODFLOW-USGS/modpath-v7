@@ -1,0 +1,16 @@
+BEGIN Options
+  LIST       ex03_mf6.lst
+END Options
+
+BEGIN Packages
+  DIS6       ex03_mf6.dis
+  IC6        ex03_mf6.ic
+  NPF6       ex03_mf6.npf
+  OC6        ex03_mf6.oc
+  RIV6       ex03_mf6.riv
+  RCH6       ex03_mf6.rch
+  DRN6       ex03_mf6.drn
+  WEL6       ex03_mf6.wel
+  STO6       ex03_mf6.sto
+END Packages
+

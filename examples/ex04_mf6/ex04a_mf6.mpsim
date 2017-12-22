@@ -1,0 +1,16 @@
+ex04_mf6.mpnam
+ex04a_mf6.mplist
+2 2 1 1 1 0
+ex04a_mf6.endpoint7
+ex04a_mf6.pathline7
+0
+1 Reference Time Option
+0.0
+2 Stopping Time Option
+1 Zone Data Option
+1 Retardation Factor Option
+1 Particle Group Count
+PG1
+1
+0.0
+external ex04a_mf6.sloc

@@ -1,0 +1,23 @@
+ex01_mf6.mpnam
+ex01a_mf6.mplist
+4 1 1 1 1 0
+ex01a_mf6.endpoint7
+ex01a_mf6.pathline7
+ex01a_mf6.timeseries7
+0
+1 
+0.0
+2 
+1 
+500  1000.
+2 
+0 
+CONSTANT 1
+CONSTANT 1
+OPEN/CLOSE zones_layer_3.txt 1 '(15i2)' 0
+1 
+1 
+PG1
+1
+0.0
+external ex01a_mf6.sloc

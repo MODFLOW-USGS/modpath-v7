@@ -1,0 +1,14 @@
+BEGIN Options
+  LIST       ex02_mf6.lst
+END Options
+
+BEGIN Packages
+  DISV6      ex02_mf6.disv
+  IC6        ex02_mf6.ic
+  NPF6       ex02_mf6.npf
+  OC6        ex02_mf6.oc
+  WEL6       ex02_mf6.wel
+  RCH6       ex02_mf6.rch
+  RIV6       ex02_mf6.riv
+END Packages
+
