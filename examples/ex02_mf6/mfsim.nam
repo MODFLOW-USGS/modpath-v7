@@ -2,11 +2,11 @@ BEGIN Options
 END Options
 
 BEGIN Timing
-  TDIS6  ex02a_mf6.tdis
+  TDIS6  ex02_mf6.tdis
 END Timing
 
 BEGIN Models
-  GWF6  ex02a_mf6.nam  ex02a_mf6
+  GWF6  ex02_mf6.nam  ex02_mf6
 END Models
 
 BEGIN Exchanges
@@ -14,5 +14,5 @@ END Exchanges
 
 BEGIN SolutionGroup 1
   MXITER  1
-  IMS6  ex02a_mf6.ims  ex02a_mf6
+  IMS6  ex02_mf6.ims  ex02_mf6
 END SolutionGroup

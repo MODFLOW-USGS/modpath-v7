@@ -1,4 +1,4 @@
-! Example 1: MODFLOW-2005 discretization file
+# Example 1: MODFLOW-2005 discretization file
          3        21        20   1   4   1  NLAY,NROW,NCOL,NPER,ITMUNI,LENUNI
  0 0 0
 CONSTANT   5.000E+02  DELR
