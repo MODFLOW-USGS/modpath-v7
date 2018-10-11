@@ -1407,52 +1407,7 @@ contains
   end function pr_GetSubCellFlow
 
 !------------------------------------------
-  subroutine pr_SolveGauss(a,b,x,n)
-    !============================================================
-    ! Solutions to a system of linear equations A*x=b
-    ! Method: the basic elimination (simple Gauss elimination)
-    ! Alex G. November 2009
-    !-----------------------------------------------------------
-    ! input ...
-    ! a(n,n) - array of coefficients for matrix A
-    ! b(n)   - vector of the right hand coefficients b
-    ! n      - number of equations
-    ! output ...
-    ! x(n)   - solutions
-    ! comments ...
-    ! the original arrays a(n,n) and b(n) will be destroyed 
-    ! during the calculation
-    !===========================================================
-    implicit none 
-    integer n
-    double precision a(n,n), b(n), x(n)
-    double precision c
-    integer i, j, k
 
-    !step 1: forward elimination
-    do k=1, n-1
-       do i=k+1,n
-          c=a(i,k)/a(k,k)
-          a(i,k) = 0.0
-          b(i)=b(i)- c*b(k)
-          do j=k+1,n
-             a(i,j) = a(i,j)-c*a(k,j)
-          end do
-       end do
-    end do
-
-    !step 2: back substitution
-    x(n) = b(n)/a(n,n)
-    do i=n-1,1,-1
-       c=0.0
-       do j=i+1,n
-         c= c + a(i,j)*x(j)
-       end do 
-       x(i) = (b(i)- c)/a(i,i)
-    end do
-end subroutine pr_SolveGauss
-
-!------------------------------------------
   subroutine pr_ComputeSubCellFlows(this)
   implicit none 
   class(ModpathCellDataType) :: this
@@ -1520,14 +1475,11 @@ end subroutine pr_SolveGauss
   qfaces = qfaces - this%GetSubCellBoundaryFlow(6, 3)
   b(3) = qfaces + qsrc + qsink + qsto
   
-  ! Solve equations using Gaussian elimination
-  call pr_SolveGauss(a,b,h,4)
-  
-  ! Compute and assign sub-cell flows
-  this%SubCellFlows(1) = h(1) - h(2)
-  this%SubCellFlows(2) = h(3)
-  this%SubCellFlows(3) = h(3) - h(1)
-  this%SubCellFlows(4) = -h(2)
+  ! Solve for subcell flows
+  this%SubCellFlows(1) = 5d-1*(b(1) + 5d-1*(b(3) - b(2)))
+  this%SubCellFlows(3) = -b(1) + this%SubCellFlows(1)
+  this%SubCellFlows(2) = b(3) - this%SubCellFlows(3)
+  this%SubCellFlows(4) = -b(2) - this%SubCellFlows(1)
   
   end subroutine pr_ComputeSubCellFlows
 
