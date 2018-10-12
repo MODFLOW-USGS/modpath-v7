@@ -711,7 +711,7 @@ module BudgetReaderModule
   integer,intent(in) :: targetPrecisionType
   integer :: n,recordCount,budgetType,precisionType,budgetFileFormat,eq0Count,  &
     gt0Count
-  logical :: hasFlowJA,hasFlowFrontFace
+  logical :: hasFlowJA,hasFlowFrontOrRightFace
   integer :: nlay,nrow,ncol,firstChar,lastChar,trimmedLength,                   &
     maxArrayBufferSize,maxListItemCount,bufferSize
   integer(kind=8) :: position,fileSize,nextPosition,temp
@@ -726,7 +726,7 @@ module BudgetReaderModule
   
   ! Set initial values for the logical flags used to check budget type (structured or unstructured)
   hasFlowJA = .false.
-  hasFlowFrontFace = .false.
+  hasFlowFrontOrRightFace = .false.
   
   ! Read through header records and count them. Update the logical budget type flags for each record header.
   precisionType = targetPrecisionType
@@ -769,7 +769,11 @@ module BudgetReaderModule
            this%FlowArraySize = header%ColumnCount
       end if
       if(header%TextLabel(firstChar:lastChar) .eq. 'FLOW FRONT FACE') then
-           hasFlowFrontFace = .true.
+           hasFlowFrontOrRightFace = .true.
+           this%FlowArraySize = header%ColumnCount * header%RowCount * header%LayerCount
+      end if
+      if(header%TextLabel(firstChar:lastChar) .eq. 'FLOW RIGHT FACE') then
+           hasFlowFrontOrRightFace = .true.
            this%FlowArraySize = header%ColumnCount * header%RowCount * header%LayerCount
       end if
       
@@ -823,7 +827,7 @@ module BudgetReaderModule
   ! Check budget type flags to determine whether it is a structured or unstructured budget file
   if(hasFlowJA) then
       budgetType = 2
-  else if(hasFlowFrontFace) then
+  else if(hasFlowFrontOrRightFace) then
       budgetType = 1
   end if
   
