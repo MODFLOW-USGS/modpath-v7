@@ -404,9 +404,9 @@ module RectangularGridDisModule
   
   call u8rdcom(iin, iout, line, ierr)
   lloc = 1
-  call urword(line, lloc, istart, istop, 1, nval, grid%OriginX, 0, 0)
-  call urword(line, lloc, istart, istop, 1, nval, grid%OriginY, 0, 0)
-  call urword(line, lloc, istart, istop, 1, nval, grid%RotationAngle, 0, 0)
+  call urword(line, lloc, istart, istop, 3, nval, grid%OriginX, 0, 0)
+  call urword(line, lloc, istart, istop, 3, nval, grid%OriginY, 0, 0)
+  call urword(line, lloc, istart, istop, 3, nval, grid%RotationAngle, 0, 0)
 
   end subroutine ReadGridMeta
   
