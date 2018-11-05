@@ -68,7 +68,7 @@ module ParticleManagerModule
               face = FindFace(p%LocalX, p%LocalY, p%LocalZ)
               initialZone = simData%Zones(p%InitialCellNumber)
               zone = simData%Zones(p%CellNumber)
-              write(outUnit, '(3i10,i5,2e18.10,i10,i5,6e18.10,2i5,i10,i5,6e18.10,2i5)') &
+              write(outUnit, '(3i10,i5,2es18.9e3,i10,i5,6es18.9e3,2i5,i10,i5,6es18.9e3,2i5)') &
                 p%SequenceNumber, p%Group, p%ID, p%Status,                      &
                 p%InitialTrackingtime, p%TrackingTime, p%InitialCellNumber,     &
                 p%InitialLayer, p%InitialLocalX, p%InitialLocalY,               &
@@ -111,7 +111,7 @@ module ParticleManagerModule
   modelX = pCoord%GlobalX
   modelY = pCoord%GlobalY
   
-  write(outUnit, '(2I8,e18.10,i10,i5,2i10,6e18.10,i10)')                        &
+  write(outUnit, '(2I8,es18.9e3,i10,i5,2i10,6es18.9e3,i10)')                  &
     timePointIndex, timeStep, pCoord%TrackingTime, sequenceNumber, groupIndex,  &
     particleID, pCoord%CellNumber, pCoord%LocalX, pCoord%LocalY, pCoord%LocalZ, &
     modelX, modelY, pCoord%GlobalZ, pCoord%Layer
@@ -153,7 +153,7 @@ module ParticleManagerModule
         c => tpResult%ParticlePath%Pathline%Items(n)
         modelX = c%GlobalX
         modelY = c%GlobalY
-        write(outUnit, "(i10,7e16.8,3I10)")                                     &
+        write(outUnit, "(i10,7es16.7e3,3I10)")                            &
           c%CellNumber, modelX, modelY, c%GlobalZ, c%TrackingTime,        &
           c%LocalX, c%LocalY, c%LocalZ, c%Layer, stressPeriod, timeStep
   end do
@@ -259,7 +259,7 @@ module ParticleManagerModule
                         trackingTime, localX, localY, localZ, layer,            &
                         stressPeriod, timeStep
                       if((count .gt. 1) .and. (i .eq. 1)) cycle
-                      write(outUnit, "(i10,7e16.8,3I10)") cellNumber, modelX,  &
+                      write(outUnit, "(i10,7es16.7e3,3I10)") cellNumber, modelX,  &
                         modelY, globalZ, trackingTime, localX, localY, localZ, &
                         layer, stressPeriod, timeStep
                   end do
