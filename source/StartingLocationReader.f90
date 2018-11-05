@@ -680,11 +680,12 @@ implicit none
 type(ParticleGroupType),intent(inout) :: pGroup
 integer,intent(inout) :: currentParticleCount
 integer,intent(in) :: nx, ny, nz, cellNumber, drape
-integer :: n,m,face,i,j,k
+! integer :: n,m,face,i,j,k
+integer :: m,face,i,j,k
 doubleprecision :: dx,dy,dz,x,y,z,faceCoord,rowCoord,columnCoord
   
 m = currentParticleCount
-pGroup%Particles(n)%InitialFace = 0
+! pGroup%Particles(n)%InitialFace = 0
 dx = 1.0d0 / dble(nx)
 dy = 1.0d0 / dble(ny)
 dz = 1.0d0 / dble(nz)
