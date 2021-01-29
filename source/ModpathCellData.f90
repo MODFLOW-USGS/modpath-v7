@@ -1411,7 +1411,6 @@ contains
   subroutine pr_ComputeSubCellFlows(this)
   implicit none 
   class(ModpathCellDataType) :: this
-  doubleprecision,dimension(4,4) :: a
   doubleprecision,dimension(4) :: b,h,subFlows
   doubleprecision :: rhs1,rhs2,rhs3,qfaces,qsrc,qsink,qsto
   
@@ -1421,29 +1420,10 @@ contains
   
   if(this%GetSubCellCount() .eq. 1) return
   
-  ! Initialize matrix
-  a(1,1) = 2
-  a(1,2) = -1
-  a(1,3) = -1
-  a(1,4) = 0
+  ! Initialize b
   b(1) = 0
-  
-  a(2,1) = -1
-  a(2,2) = 2
-  a(2,3) = 0
-  a(2,4) = -1
   b(2) = 0
-  
-  a(3,1) = -1
-  a(3,2) = 0
-  a(3,3) = 2
-  a(3,4) = -1
   b(3) = 0
-  
-  a(4,1) = 0
-  a(4,2) = 0
-  a(4,3) = 0
-  a(4,4) = 1
   b(4) = 0
   
   ! Compute internal source/sink values and set the right hand side
