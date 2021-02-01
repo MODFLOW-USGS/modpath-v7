@@ -191,9 +191,11 @@ module ParticleManagerModule
   implicit none
   integer, intent(in) :: inUnit, outUnit, recordCount, particleCount
   integer, dimension(:), allocatable :: sequenceNumbers, recordPointCounts,     &
-    recordPointers, particlePointCounts, particleRecordCounts
-  integer :: pos, currentPos, dataOffset, n, m, i, count, ptr, group, id,       &
+    particlePointCounts, particleRecordCounts
+  integer (kind=8), dimension(:), allocatable :: recordPointers
+  integer :: currentPos, dataOffset, n, m, i, count, group, id,               &
     stressPeriod, timeStep
+  integer (kind=8) :: pos, ptr
   integer :: cellNumber, layer, pointCount
   doubleprecision :: modelX, modelY, globalZ, trackingTime, localX, localY,   &
     localZ
