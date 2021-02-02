@@ -272,6 +272,7 @@
     allocate(buffer(bufferSize))
     do n = 1, modelGrid%CellCount
         call modelGrid%GetJaCellConnections(n, buffer, bufferSize, cellConnectionCount)
+        if (cellConnectionCount == 0) cycle
         write(logUnit, '(1x,25i8)') (buffer(m), m = 1, cellConnectionCount)
         call modelGrid%GetCellConnectionFaces(n, buffer, bufferSize, cellConnectionCount)
         write(logUnit, '(1x,25i8)') (buffer(m), m = 1, cellConnectionCount)
