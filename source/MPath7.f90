@@ -13,7 +13,7 @@
         mplistUnit, traceUnit, budchkUnit, aobsUnit, logUnit, mpsimUnit,        &
         traceModeUnit, mpnamFile, mplistFile, mpbasFile, disFile, tdisFile,     &
         gridFile, headFile, budgetFile, mpsimFile, traceFile,  gridMetaFile,    &
-        particleGroupCount, gridFileType
+        mplogFile, particleGroupCount, gridFileType
     use UtilMiscModule,only : ulog
     use utl8module,only : freeunitnumber, ustop
     use ModpathCellDataModule,only : ModpathCellDataType
@@ -120,7 +120,8 @@
      gridMetaUnit = 117
      
     ! Open the log file
-    open(unit=logUnit, file='mpath7.log', status='replace', form='formatted', access='sequential')
+    call GetLogFile(mplogFile)
+    open(unit=logUnit, file=mplogFile, status='replace', form='formatted', access='sequential')
     
     ! Get the name of the MODPATH simulation file
     call ulog('Get the name of the MODPATH simulation file.', logUnit)
@@ -780,7 +781,53 @@
     !pause
     
     contains
+
+    subroutine GetLogFile(mplogFile)
+!***************************************************************************************************************
+! Description goes here
+!***************************************************************************************************************
+!
+! Specifications
+!---------------------------------------------------------------------------------------------------------------
+    use utl7module,only : urword
+    implicit none
+    character*(*),intent(inout) :: mplogFile
+    character*200 comlin
+    integer :: narg, length, status, ndot, nlast
+!---------------------------------------------------------------------------------------------------------------
     
+    ! Get the number of command-line arguments
+    narg = command_argument_count()
+    
+    select case (narg)
+    ! No command-line argument, so default to mpath7.log
+    case (0)
+        mplogFile = "mpath7.log"
+    
+    ! One command-line argument, which is the mpsim file name, so default
+    ! to mpath7.log
+    case (1)
+        mplogFile = "mpath7.log"
+        
+    ! Two command-line arguments, so set the log file name to the second one
+    case (2)
+        call get_command_argument(2, comlin, length, status)
+        mplogFile = comlin(1:length)
+    
+    ! The command line has a problem, so call ustop with a message and stop.
+    case default
+        call ustop('An error occurred processing the command line. Stop.')
+    end select
+
+    ! Add .log extension if not present
+    nlast = len(trim(mplogFile))
+    ndot = max(nlast - 3, 1)
+    if(mplogFile(ndot:nlast) /= ".log") mplogFile = trim(mplogFile) // ".log"
+
+    return
+    
+    end subroutine GetLogFile
+
     subroutine GetSimulationFile(mpsimFile)
 !***************************************************************************************************************
 ! Description goes here
@@ -809,14 +856,20 @@
       call urword(mpsimFile,icol,istart,istop,0,n,r,0,0)
       mpsimFile = mpsimFile(istart:istop)
     
-    ! Command-line argument was present, so set the mpsim file name equal to it.
+    ! One command-line argument, so set the mpsim file name equal to it
     case (1)
+        call get_command_argument(1, comlin, length, status)
+        mpsimFile = comlin(1:length)
+
+    ! Two command-line arguments, so set the mpsim file name equal to
+    ! the first one
+    case (2)
         call get_command_argument(1, comlin, length, status)
         mpsimFile = comlin(1:length)
     
     ! The command line has a problem, so call ustop with a message and stop.
     case default
-        call ustop('An error occurred procxessing the command line. Stop.')
+        call ustop('An error occurred processing the command line. Stop.')
     end select
     
     ! Check for existence and stop if the file is not found.
