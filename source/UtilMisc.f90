@@ -58,7 +58,7 @@ subroutine ulog(logMessage, fileUnit)
     integer :: fileUnit
 !     ------------------------------------------------------------------
 
-    if (logMessage .ne. ' ') then
+    if ((logMessage .ne. ' ') .and. (fileUnit .gt. 0)) then
     write(fileUnit,'(a)') logMessage
     end if
     return

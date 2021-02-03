@@ -13,7 +13,7 @@
         mplistUnit, traceUnit, budchkUnit, aobsUnit, logUnit, mpsimUnit,        &
         traceModeUnit, mpnamFile, mplistFile, mpbasFile, disFile, tdisFile,     &
         gridFile, headFile, budgetFile, mpsimFile, traceFile,  gridMetaFile,    &
-        mplogFile, particleGroupCount, gridFileType
+        mplogFile, logType, particleGroupCount, gridFileType
     use UtilMiscModule,only : ulog
     use utl8module,only : freeunitnumber, ustop
     use ModpathCellDataModule,only : ModpathCellDataType
@@ -119,16 +119,19 @@
      binPathlineUnit = 116
      gridMetaUnit = 117
      
-    ! Open the log file
-    call GetLogFile(mplogFile)
-    open(unit=logUnit, file=mplogFile, status='replace', form='formatted', access='sequential')
-    
-    ! Get the name of the MODPATH simulation file
-    call ulog('Get the name of the MODPATH simulation file.', logUnit)
-    call GetSimulationFile(mpsimFile)
-    if(len_trim(mpsimFile) .eq. 0) then
-        write(*, '(a)') 'The simulation file could not be found. Stop.'
-        goto 100
+    ! Parse the command line for simulation file name, log file name, and options
+    call ParseCommandLine(mpsimFile, mplogFile, logType)
+    ! Open the log file (unless -nolog option)
+    if (logType /= 0) then
+        open(unit=logUnit, file=mplogFile, status='replace', form='formatted', access='sequential')
+    else
+        logUnit = -logUnit
+    end if
+    call ulog('Command line parsed.', logUnit)
+    ! If simulation file name not on command line, prompt user for name
+    if (mpsimFile == "") then
+        call ulog('Prompt for the name of the MODPATH simulation file.', logUnit)
+        call PromptSimulationFile(mpsimFile)
     end if
     
     ! Read the first two records of the simulation file to get the names of the 
@@ -260,24 +263,28 @@
         end select
     
     ! Write connection data
-    write(logUnit, *)
-    write(logUnit, '(1x,a)') '----------------------------------------------------------'
-    write(logUnit, '(1x,a)') 'Cell connection data:'
-    write(logUnit, '(1x,a)') '----------------------------------------------------------'
-    write(logUnit, '(1x,a)') 'Format has two lines for each cell, listed by cell number.'
-    write(logUnit, '(1x,a)') 'Line 1: Cell connections'
-    write(logUnit, '(1x,a)') 'Line 1: Face assignment codes'
-    write(logUnit, '(1x,a)') '----------------------------------------------------------'
-    bufferSize = 25
-    allocate(buffer(bufferSize))
-    do n = 1, modelGrid%CellCount
-        call modelGrid%GetJaCellConnections(n, buffer, bufferSize, cellConnectionCount)
-        if (cellConnectionCount == 0) cycle
-        write(logUnit, '(1x,25i8)') (buffer(m), m = 1, cellConnectionCount)
-        call modelGrid%GetCellConnectionFaces(n, buffer, bufferSize, cellConnectionCount)
-        write(logUnit, '(1x,25i8)') (buffer(m), m = 1, cellConnectionCount)
-        write(logUnit, *)        
-    end do
+    if (logType == 2) then
+        call ulog('Skip output of cell connection data.', logUnit)
+    else if (logType == 1) then
+        write(logUnit, *)
+        write(logUnit, '(1x,a)') '----------------------------------------------------------'
+        write(logUnit, '(1x,a)') 'Cell connection data:'
+        write(logUnit, '(1x,a)') '----------------------------------------------------------'
+        write(logUnit, '(1x,a)') 'Format has two lines for each cell, listed by cell number.'
+        write(logUnit, '(1x,a)') 'Line 1: Cell connections'
+        write(logUnit, '(1x,a)') 'Line 1: Face assignment codes'
+        write(logUnit, '(1x,a)') '----------------------------------------------------------'
+        bufferSize = 25
+        allocate(buffer(bufferSize))
+        do n = 1, modelGrid%CellCount
+            call modelGrid%GetJaCellConnections(n, buffer, bufferSize, cellConnectionCount)
+            if (cellConnectionCount == 0) cycle
+            write(logUnit, '(1x,25i8)') (buffer(m), m = 1, cellConnectionCount)
+            call modelGrid%GetCellConnectionFaces(n, buffer, bufferSize, cellConnectionCount)
+            write(logUnit, '(1x,25i8)') (buffer(m), m = 1, cellConnectionCount)
+            write(logUnit, *)        
+        end do
+    end if
     
     ! Initialize the georeference data
     call geoRef%SetData(modelGrid%OriginX, modelGrid%OriginY, modelGrid%RotationAngle)
@@ -772,7 +779,7 @@
     ! Close files
 200 continue    
     close(mplistUnit)
-    close(logUnit)
+    if (logType /= 0) close(logUnit)
 
     ! Uncomment the following pause statement when running in debug mode within Visual Studio.
     ! The pause statement keeps the command window from immediately closing when the MODPATH run completes.
@@ -783,53 +790,89 @@
     
     contains
 
-    subroutine GetLogFile(mplogFile)
+    subroutine ParseCommandLine(mpsimFile, mplogFile, logType)
 !***************************************************************************************************************
 ! Description goes here
 !***************************************************************************************************************
 !
 ! Specifications
 !---------------------------------------------------------------------------------------------------------------
-    use utl7module,only : urword
     implicit none
+    character*(*),intent(inout) :: mpsimFile
     character*(*),intent(inout) :: mplogFile
+    integer,intent(inout) :: logType
     character*200 comlin
-    integer :: narg, length, status, ndot, nlast
+    integer :: narg, length, status, ndot, nlast, na, nc
+    logical :: exists
 !---------------------------------------------------------------------------------------------------------------
     
     ! Get the number of command-line arguments
     narg = command_argument_count()
     
-    select case (narg)
-    ! No command-line argument, so default to mpath7.log
-    case (0)
-        mplogFile = "mpath7.log"
-    
-    ! One command-line argument, which is the mpsim file name, so default
-    ! to mpath7.log
-    case (1)
-        mplogFile = "mpath7.log"
-        
-    ! Two command-line arguments, so set the log file name to the second one
-    case (2)
-        call get_command_argument(2, comlin, length, status)
-        mplogFile = comlin(1:length)
-    
-    ! The command line has a problem, so call ustop with a message and stop.
-    case default
-        call ustop('An error occurred processing the command line. Stop.')
-    end select
+    ! Initialize mpsimFile, mplogFile, and logType
+    mpsimFile = ""
+    mplogFile = ""
+    logType = 1
 
-    ! Add .log extension if not present
-    nlast = len(trim(mplogFile))
-    ndot = max(nlast - 3, 1)
-    if(mplogFile(ndot:nlast) /= ".log") mplogFile = trim(mplogFile) // ".log"
+    ! Loop through the command-line arguments (if any)
+    na = 1
+    do while (na <= narg)
+        call get_command_argument(na, comlin, length, status)
+        if ((na == 1) .and. (comlin(1:1) /= "-")) then
+            na = na + 1
+            mpsimFile = comlin(1:length)
+            ! Check for existence of the file, adding .mpsim extension if necessary
+            call CheckSimulationFile(mpsimFile)
+        else
+            na = na + 1
+            select case (comlin(1:length))
+            case ("-shortlog")
+                ! -shortlog option
+                if (logType.ne.1) then
+                    call ustop('Conflicting or redundant log options on the command line. Stop.')
+                else
+                    logType = 2
+                end if
+            case ("-nolog")
+                ! -nolog option
+                if (logType.ne.1) then
+                    call ustop('Conflicting or redundant log options on the command line. Stop.')
+                else
+                    logType = 0
+                end if
+            case ("-logname")
+                ! -logname option
+                if (mplogFile == "") then
+                    call get_command_argument(na, comlin, length, status)
+                    na = na + 1
+                    if ((status /= 0) .or. (comlin(1:1) == "-")) then
+                        call ustop('Invalid or missing log file name on the command line. Stop.')
+                    else
+                        mplogFile = comlin(1:length)
+                    end if
+                else
+                    call ustop('Conflicting log file names on the command line. Stop.')
+                end if
+            case default
+                if (comlin(1:1).eq."-") then
+                    call ustop('Unrecognized option on the command line. Stop.')
+                else
+                    call ustop('An error occurred processing the command line. Stop.')
+                end if
+            end select
+        end if
+    end do
+    if ((mplogFile /= "") .and. (logType.eq.0))                                   &
+        call ustop('Options -logname and -nolog both on the command line. Stop.')
+    
+    ! If log file name not specified, set to default
+    if (mplogFile == "") mplogFile = "mpath7.log"
 
     return
     
-    end subroutine GetLogFile
+    end subroutine ParseCommandLine
 
-    subroutine GetSimulationFile(mpsimFile)
+    subroutine PromptSimulationFile(mpsimFile)
 !***************************************************************************************************************
 ! Description goes here
 !***************************************************************************************************************
@@ -839,53 +882,52 @@
     use utl7module,only : urword
     implicit none
     character*(*),intent(inout) :: mpsimFile
-    character*200 comlin, line
-    integer :: icol, istart, istop, n, nc, narg, length, status
+    integer :: icol, istart, istop, n
     real(kind=4) :: r
     logical :: exists
 !---------------------------------------------------------------------------------------------------------------
-    
-    ! Get the number of command-line arguments
-    narg = command_argument_count()
-    
-    select case (narg)
-    ! No command-line argument, so prompt for user to enter mpsim file
-    case (0)
-      icol = 1
-      write(*, *) 'Enter the MODPATH simulation file: '
-      read(*, '(a)') mpsimFile
-      call urword(mpsimFile,icol,istart,istop,0,n,r,0,0)
-      mpsimFile = mpsimFile(istart:istop)
-    
-    ! One command-line argument, so set the mpsim file name equal to it
-    case (1)
-        call get_command_argument(1, comlin, length, status)
-        mpsimFile = comlin(1:length)
 
-    ! Two command-line arguments, so set the mpsim file name equal to
-    ! the first one
-    case (2)
-        call get_command_argument(1, comlin, length, status)
-        mpsimFile = comlin(1:length)
+    ! Prompt user to enter simulation file name
+    icol = 1
+    write(*, *) 'Enter the MODPATH simulation file: '
+    read(*, '(a)') mpsimFile
+    call urword(mpsimFile,icol,istart,istop,0,n,r,0,0)
+    mpsimFile = mpsimFile(istart:istop)
     
-    ! The command line has a problem, so call ustop with a message and stop.
-    case default
-        call ustop('An error occurred processing the command line. Stop.')
-    end select
+    ! Check for existence of simulation file, adding .mpsim extension if necessary
+    call CheckSimulationFile(mpsimFile)
+
+    return
+
+    end subroutine PromptSimulationFile
+
+    subroutine CheckSimulationFile(mpsimFile)
+!***************************************************************************************************************
+! Description goes here
+!***************************************************************************************************************
+!
+! Specifications
+!---------------------------------------------------------------------------------------------------------------
+    implicit none
+    character*(*),intent(inout) :: mpsimFile
+    integer :: nc
+    logical :: exists
+!---------------------------------------------------------------------------------------------------------------
     
-    ! Check for existence and stop if the file is not found.
+    ! Check for existence of the file
     inquire (file=mpsimFile, exist=exists)
     if(.not. exists) then
+        ! Add .mpsim extension, check again, and stop if not found
         nc = index(mpsimFile,' ')
         mpsimFile(nc:nc+5)='.mpsim'
         inquire (file=mpsimFile, exist=exists)
-        if(.not. exists) then
-          call ustop('The specified simulation file could not be found. Stop.')
-        end if
+        if(.not. exists) call ustop('The specified simulation file could not be found. Stop.')
     end if
     mpsimFile = trim(mpsimFile)
+
+    return
     
-    end subroutine GetSimulationFile
+    end subroutine CheckSimulationFile
     
     subroutine ReadNameFile(filename, outUnit, gridFileType)
 !***************************************************************************************************************
