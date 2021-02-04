@@ -109,10 +109,6 @@ module ModflowRectangularGridModule
               rx = 1.0
           else if(abs(rx - 2.0) .le. tol) then
               rx = 2.0
-!!          else
-!!              ! exit with error message that this grid is not consistent with a 
-!!              ! smoothed quad grid.
-!!              call ustop('Invalid grid spacing structure. stop.')
           end if
           ry = this%DelY(conn) / this%DelY(n)
           if(abs(ry - 0.5) .le. tol) then
@@ -121,10 +117,6 @@ module ModflowRectangularGridModule
               ry = 1.0
           else if(abs(ry - 2.0) .le. tol) then
               ry = 2.0
-!!          else
-!!              ! exit with error message that this grid is not consistent with a 
-!!              ! smoothed quad grid.
-!!              call ustop('Invalid grid spacing structure. stop.')
           end if
           
           ! Assign face connections
@@ -141,7 +133,6 @@ module ModflowRectangularGridModule
                   else if((this%CellY(conn) .lt. this%CellY(n)) .and. (this%CellX(conn) .gt. this%CellX(n))) then
                       m = m + 404
                   end if
-!!              else if((rx .ge. 1.0) .and. (ry .ge. 1.0)) then
               else if(((rx .eq. 1.0) .or. (rx .eq. 2.0)) .and. (rx .eq. ry)) then
                   m = m + 101
               else
@@ -161,7 +152,6 @@ module ModflowRectangularGridModule
                   else if((this%CellY(conn) .lt. this%CellY(n)) .and. (this%CellX(conn) .gt. this%CellX(n))) then
                       m = m + 404
                   end if                  
-!!              else if((rx .ge. 1.0) .and. (ry .ge. 1.0)) then
               else if(((rx .eq. 1.0) .or. (rx .eq. 2.0)) .and. (rx .eq. ry)) then
                   m = m + 101
               else
@@ -178,7 +168,6 @@ module ModflowRectangularGridModule
                       else if(this%CellY(conn) .lt. this%CellY(n)) then
                           m = m + 202
                       end if
-!!                  else if(ry .ge. 1.0) then
                   else if((ry .eq. 1.0) .or. ((ry .eq. 2.0))) then
                       m = m + 101
                   else
@@ -194,7 +183,6 @@ module ModflowRectangularGridModule
                       else if(this%CellY(conn) .lt. this%CellY(n)) then
                           m = m + 202
                       end if
-!!                   else if(ry .ge. 1.0) then
                   else if((ry .eq. 1.0) .or. ((ry .eq. 2.0))) then
                       m = m + 101
                   else
@@ -210,7 +198,6 @@ module ModflowRectangularGridModule
                       else if(this%CellX(conn) .gt. this%CellX(n)) then
                           m = m + 202
                       end if
-!!                  else if(rx .ge. 1.0) then
                   else if((rx .eq. 1.0) .or. ((rx .eq. 2.0))) then
                       m = m + 101
                   else
@@ -226,7 +213,6 @@ module ModflowRectangularGridModule
                       else if(this%CellX(conn) .gt. this%CellX(n)) then
                           m = m + 202
                       end if                      
-!!                  else if(rx .ge. 1.0) then
                   else if((rx .eq. 1.0) .or. ((rx .eq. 2.0))) then
                       m = m + 101
                   else
