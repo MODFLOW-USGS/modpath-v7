@@ -608,8 +608,8 @@ contains
   class(ModflowRectangularGridType),intent(in) :: grid
   integer,intent(in) :: cellNumber,cellCount
   integer,intent(in) :: reducedConnectionCount
-  integer,intent(in) :: iboundTS, layerType, zone
-  integer,intent(in),dimension(cellCount) :: ibound
+  integer,intent(in) :: layerType, zone
+  integer,intent(in),dimension(cellCount) :: ibound, iboundTS
   doubleprecision,intent(in) :: porosity, retardation, storageFlow, sourceFlow, sinkFlow
   doubleprecision,intent(in),dimension(6) :: boundaryFlows
   doubleprecision,intent(in),dimension(reducedConnectionCount) :: faceFlows
@@ -635,7 +635,7 @@ contains
   this%LayerType = layerType
   this%Head = head
   this%Ibound = ibound(cellNumber)
-  this%IboundTS = iboundTS
+  this%IboundTS = iboundTS(cellNumber)
   this%Porosity = porosity
   this%Retardation = retardation
   this%SourceFlow = sourceFlow
@@ -655,7 +655,7 @@ contains
         if(conn .eq. 0) then
             i = i + 1
         else
-            if(ibound(conn) .eq. 0) i = i + 1
+            if(iboundTS(conn) .eq. 0) i = i + 1
         end if
       end do
       this%SubFaceBoundaryCounts(1) = i
@@ -674,7 +674,7 @@ contains
         if(conn .eq. 0) then
             i = i + 1
         else
-            if(ibound(conn) .eq. 0) i = i + 1
+            if(iboundTS(conn) .eq. 0) i = i + 1
         end if
       end do
       this%SubFaceBoundaryCounts(2) = i
@@ -692,7 +692,7 @@ contains
         if(conn .eq. 0) then
             i = i + 1
         else
-            if(ibound(conn) .eq. 0) i = i + 1
+            if(iboundTS(conn) .eq. 0) i = i + 1
         end if
       end do
       this%SubFaceBoundaryCounts(3) = i
@@ -710,7 +710,7 @@ contains
         if(conn .eq. 0) then
             i = i + 1
         else
-            if(ibound(conn) .eq. 0) i = i + 1
+            if(iboundTS(conn) .eq. 0) i = i + 1
         end if
       end do
       this%SubFaceBoundaryCounts(4) = i
@@ -728,7 +728,7 @@ contains
         if(conn .eq. 0) then
             i = i + 1
         else
-            if(ibound(conn) .eq. 0) i = i + 1
+             if(iboundTS(conn) .eq. 0) i = i + 1
         end if
       end do
       this%SubFaceBoundaryCounts(5) = i
@@ -746,7 +746,7 @@ contains
         if(conn .eq. 0) then
             i = i + 1
         else
-            if(ibound(conn) .eq. 0) i = i + 1
+            if(iboundTS(conn) .eq. 0) i = i + 1
         end if
       end do
       this%SubFaceBoundaryCounts(6) = i
@@ -820,7 +820,10 @@ contains
       if(this%SubFaceBoundaryCounts(1) .gt. 0) then
         flow = boundaryFlows(1)/this%SubFaceBoundaryCounts(1)
         do n = 1, this%SubFaceCounts(1)
-          if(this%SubFaceConn1(n) .eq. 0) then
+          conn = this%SubFaceConn1(n)
+          if (conn .eq. 0) then
+            this%Q1(n) = flow
+          else if (iboundTS(conn) .eq. 0) then
             this%Q1(n) = flow
           end if
         end do
@@ -838,7 +841,10 @@ contains
       if(this%SubFaceBoundaryCounts(2) .gt. 0) then
         flow = boundaryFlows(2)/this%SubFaceBoundaryCounts(2)
         do n = 1, this%SubFaceCounts(2)
-          if(this%SubFaceConn2(n) .eq. 0) then
+          conn = this%SubFaceConn2(n)
+          if (conn .eq. 0) then
+            this%Q2(n) = -flow
+          else if (iboundTS(conn) .eq. 0) then
             this%Q2(n) = -flow
           end if
         end do
@@ -856,7 +862,10 @@ contains
       if(this%SubFaceBoundaryCounts(3) .gt. 0) then
         flow = boundaryFlows(3)/this%SubFaceBoundaryCounts(3)
         do n = 1, this%SubFaceCounts(3)
-          if(this%SubFaceConn3(n) .eq. 0) then
+          conn = this%SubFaceConn3(n)
+          if (conn .eq. 0) then
+            this%Q3(n) = flow
+          else if (iboundTS(conn) .eq. 0) then
             this%Q3(n) = flow
           end if
         end do
@@ -874,7 +883,10 @@ contains
       if(this%SubFaceBoundaryCounts(4) .gt. 0) then
         flow = boundaryFlows(4)/this%SubFaceBoundaryCounts(4)
         do n = 1, this%SubFaceCounts(4)
-          if(this%SubFaceConn4(n) .eq. 0) then
+          conn = this%SubFaceConn4(n)
+          if (conn .eq. 0) then
+            this%Q4(n) = -flow
+          else if (iboundTS(conn) .eq. 0) then
             this%Q4(n) = -flow
           end if
         end do
@@ -892,7 +904,10 @@ contains
       if(this%SubFaceBoundaryCounts(5) .gt. 0) then
         flow = boundaryFlows(5)/this%SubFaceBoundaryCounts(5)
         do n = 1, this%SubFaceCounts(5)
-          if(this%SubFaceConn5(n) .eq. 0) then
+          conn = this%SubFaceConn5(n)
+          if (conn .eq. 0) then
+            this%Q5(n) = flow
+          else if (iboundTS(conn) .eq. 0) then
             this%Q5(n) = flow
           end if
         end do
@@ -910,7 +925,10 @@ contains
       if(this%SubFaceBoundaryCounts(6) .gt. 0) then
         flow = boundaryFlows(6)/this%SubFaceBoundaryCounts(6)
         do n = 1, this%SubFaceCounts(6)
-          if(this%SubFaceConn6(n) .eq. 0) then
+          conn = this%SubFaceConn6(n)
+          if (conn .eq. 0) then
+            this%Q6(n) = -flow
+          else if (iboundTS(conn) .eq. 0) then
             this%Q6(n) = -flow
           end if
         end do
@@ -945,8 +963,8 @@ contains
   class(ModflowRectangularGridType),intent(in) :: grid
   integer,intent(in) :: cellNumber
   integer,intent(in) :: cellCount
-  integer,intent(in) :: iboundTS, layerType, zone
-  integer,intent(in),dimension(cellCount) :: ibound
+  integer,intent(in) :: layerType, zone
+  integer,intent(in),dimension(cellCount) :: ibound, iboundTS
   doubleprecision,intent(in) :: porosity, retardation, storageFlow, sourceFlow, sinkFlow
   doubleprecision,intent(in),dimension(6) :: boundaryFlows
   doubleprecision,intent(in),dimension(cellCount) :: flowsRightFace
@@ -974,7 +992,7 @@ contains
   this%LayerType = layerType
   this%Head = head
   this%Ibound = ibound(cellNumber)
-  this%IboundTS = iboundTS
+  this%IboundTS = iboundTS(cellNumber)
   this%Porosity = porosity
   this%Retardation = retardation
   this%SourceFlow = sourceFlow
@@ -994,7 +1012,7 @@ contains
         if(conn .eq. 0) then
             i = i + 1
         else
-            if(ibound(conn) .eq. 0) i = i + 1
+             if(iboundTS(conn) .eq. 0) i = i + 1
         end if
       end do
       this%SubFaceBoundaryCounts(1) = i
@@ -1013,7 +1031,7 @@ contains
         if(conn .eq. 0) then
             i = i + 1
         else
-            if(ibound(conn) .eq. 0) i = i + 1
+            if(iboundTS(conn) .eq. 0) i = i + 1
         end if
       end do
       this%SubFaceBoundaryCounts(2) = i
@@ -1031,7 +1049,7 @@ contains
         if(conn .eq. 0) then
             i = i + 1
         else
-            if(ibound(conn) .eq. 0) i = i + 1
+            if(iboundTS(conn) .eq. 0) i = i + 1
         end if
       end do
       this%SubFaceBoundaryCounts(3) = i
@@ -1049,7 +1067,7 @@ contains
         if(conn .eq. 0) then
             i = i + 1
         else
-            if(ibound(conn) .eq. 0) i = i + 1
+            if(iboundTS(conn) .eq. 0) i = i + 1
         end if
       end do
       this%SubFaceBoundaryCounts(4) = i
@@ -1067,7 +1085,7 @@ contains
         if(conn .eq. 0) then
             i = i + 1
         else
-            if(ibound(conn) .eq. 0) i = i + 1
+            if(iboundTS(conn) .eq. 0) i = i + 1
         end if
       end do
       this%SubFaceBoundaryCounts(5) = i
@@ -1085,7 +1103,7 @@ contains
         if(conn .eq. 0) then
             i = i + 1
         else
-            if(ibound(conn) .eq. 0) i = i + 1
+            if(iboundTS(conn) .eq. 0) i = i + 1
         end if
       end do
       this%SubFaceBoundaryCounts(6) = i
@@ -1138,7 +1156,10 @@ contains
       if(this%SubFaceBoundaryCounts(1) .gt. 0) then
         flow = boundaryFlows(1)/this%SubFaceBoundaryCounts(1)
         do n = 1, this%SubFaceCounts(1)
-          if(this%SubFaceConn1(n) .eq. 0) then
+          conn = this%SubFaceConn1(n)
+          if (conn .eq. 0) then
+            this%Q1(n) = flow
+          else if (iboundTS(conn) .eq. 0) then
             this%Q1(n) = flow
           end if
         end do
@@ -1156,7 +1177,10 @@ contains
       if(this%SubFaceBoundaryCounts(2) .gt. 0) then
         flow = boundaryFlows(2)/this%SubFaceBoundaryCounts(2)
         do n = 1, this%SubFaceCounts(2)
-          if(this%SubFaceConn2(n) .eq. 0) then
+          conn = this%SubFaceConn2(n)
+          if (conn .eq. 0) then
+            this%Q2(n) = -flow
+          else if (iboundTS(conn) .eq. 0) then
             this%Q2(n) = -flow
           end if
         end do
@@ -1174,7 +1198,10 @@ contains
       if(this%SubFaceBoundaryCounts(3) .gt. 0) then
         flow = boundaryFlows(3)/this%SubFaceBoundaryCounts(3)
         do n = 1, this%SubFaceCounts(3)
-          if(this%SubFaceConn3(n) .eq. 0) then
+          conn = this%SubFaceConn3(n)
+          if (conn .eq. 0) then
+            this%Q3(n) = flow
+          else if (iboundTS(conn) .eq. 0) then
             this%Q3(n) = flow
           end if
         end do
@@ -1192,7 +1219,10 @@ contains
       if(this%SubFaceBoundaryCounts(4) .gt. 0) then
         flow = boundaryFlows(4)/this%SubFaceBoundaryCounts(4)
         do n = 1, this%SubFaceCounts(4)
-          if(this%SubFaceConn4(n) .eq. 0) then
+          conn = this%SubFaceConn4(n)
+          if (conn .eq. 0) then
+            this%Q4(n) = -flow
+          else if (iboundTS(conn) .eq. 0) then
             this%Q4(n) = -flow
           end if
         end do
@@ -1210,7 +1240,10 @@ contains
       if(this%SubFaceBoundaryCounts(5) .gt. 0) then
         flow = boundaryFlows(5)/this%SubFaceBoundaryCounts(5)
         do n = 1, this%SubFaceCounts(5)
-          if(this%SubFaceConn5(n) .eq. 0) then
+          conn = this%SubFaceConn5(n)
+          if (conn .eq. 0) then
+            this%Q5(n) = flow
+          else if (iboundTS(conn) .eq. 0) then
             this%Q5(n) = flow
           end if
         end do
@@ -1228,7 +1261,10 @@ contains
       if(this%SubFaceBoundaryCounts(6) .gt. 0) then
         flow = boundaryFlows(6)/this%SubFaceBoundaryCounts(6)
         do n = 1, this%SubFaceCounts(6)
-          if(this%SubFaceConn6(n) .eq. 0) then
+          conn = this%SubFaceConn6(n)
+          if (conn .eq. 0) then
+            this%Q6(n) = -flow
+          else if (iboundTS(conn) .eq. 0) then
             this%Q6(n) = -flow
           end if
         end do

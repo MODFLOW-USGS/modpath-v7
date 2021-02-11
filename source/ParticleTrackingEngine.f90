@@ -33,6 +33,7 @@ module ParticleTrackingEngineModule
     character(len=16),dimension(20) :: DefaultIfaceLabels
     integer,dimension(20) :: DefaultIfaceValues
     integer,allocatable,dimension(:) :: IBoundTS
+    integer,allocatable,dimension(:) :: ArrayBufferInt
     doubleprecision,allocatable,dimension(:) :: Heads
     doubleprecision,allocatable,dimension(:) :: FlowsJA
     doubleprecision,allocatable,dimension(:) :: FlowsRightFace
@@ -601,6 +602,7 @@ subroutine pr_Initialize(this,headReader, budgetReader, grid, hNoFlow, hDry, tra
   ! Allocate buffers for reading array and list data
   allocate(this%ListItemBuffer(this%BudgetReader%GetMaximumListItemCount()))
   allocate(this%ArrayBufferDbl(this%BudgetReader%GetMaximumArrayItemCount()))  
+  allocate(this%ArrayBufferInt(this%BudgetReader%GetMaximumArrayItemCount()))
   
   this%Initialized = .true.
 
@@ -709,7 +711,8 @@ subroutine pr_LoadTimeStep(this, stressPeriod, timeStep)
     boundaryFlowsOffset, listItemBufferSize, cellNumber, layer
   type(BudgetRecordHeaderType) :: header
   character(len=16) :: textLabel
-  doubleprecision :: top
+  doubleprecision :: top 
+  real :: HDryTol, HDryDiff
 !---------------------------------------------------------------------------------------------------------------
   
   call this%ClearTimeStepBudgetData()
@@ -729,6 +732,7 @@ subroutine pr_LoadTimeStep(this, stressPeriod, timeStep)
   ! Fill IBoundTS array and set the SaturatedTop array for the Grid.
   ! The saturated top is set equal to the top for confined cells and water table cells 
   ! where the head is above the top or below the bottom.
+  HDryTol = abs(epsilon(HDryTol)*sngl(this%HDry))
   if(this%Grid%GridType .gt. 2) then
       do n = 1, cellCount
           this%Grid%SaturatedTop(n) = this%Grid%Top(n)
@@ -736,9 +740,9 @@ subroutine pr_LoadTimeStep(this, stressPeriod, timeStep)
           this%IBoundTS(n) = this%IBound(n)
           layer = this%Grid%GetLayer(n)
           if(this%Grid%CellType(n) .eq. 1) then
-              if(this%Heads(n) .eq. this%HDry) then
+              HDryDiff = sngl(this%Heads(n)) - sngl(this%HDry)
+              if(abs(HDryDiff) .lt. HDryTol) then
                   this%IBoundTS(n) = 0
-              else
                   if(this%Heads(n) .lt. this%Grid%Bottom(n)) then
                       this%IBoundTS(n) = 0
                       this%Grid%SaturatedTop(n) = this%Grid%Bottom(n)
@@ -760,7 +764,8 @@ subroutine pr_LoadTimeStep(this, stressPeriod, timeStep)
           this%IBoundTS(n) = this%IBound(n)
           layer = this%Grid%GetLayer(n)
           if(this%Grid%CellType(n) .eq. 1) then
-              if((this%Heads(n) .eq. this%HDry) .or. (this%Heads(n) .gt. 1.0d+6)) then
+              HDryDiff = sngl(this%Heads(n)) - sngl(this%HDry)
+              if((abs(HDryDiff) .lt. HDryTol) .or. (this%Heads(n) .gt. 1.0d+6)) then
                   this%IBoundTS(n) = 0
               end if
               if(this%IBoundTS(n) .ne. 0) then
@@ -957,7 +962,34 @@ subroutine pr_LoadTimeStep(this, stressPeriod, timeStep)
                     end if
                 end if
              else if(header%Method .eq. 3) then
-                 ! Not yet supported
+                call this%BudgetReader%FillRecordDataBuffer(header,             &
+                  this%ArrayBufferDbl, this%ArrayBufferInt,                     &
+                  header%ArrayItemCount, spaceAssigned, status)
+                if(header%ArrayItemCount .eq. spaceAssigned) then
+                    call this%CheckForDefaultIface(header%TextLabel, iface)
+                    if(iface .gt. 0) then
+                        do m = 1, spaceAssigned
+                            cellNumber = this%ArrayBufferInt(m)
+                            boundaryFlowsOffset = 6 * (cellNumber - 1)
+                            this%BoundaryFlows(boundaryFlowsOffset + iface) =   &
+                              this%BoundaryFlows(boundaryFlowsOffset + iface) + &
+                              this%ArrayBufferDbl(m)
+                        end do
+                    else            
+                        do m = 1, spaceAssigned
+                            cellNumber = this%ArrayBufferInt(m)
+                            if(this%ArrayBufferDbl(m) .gt. 0.0d0) then
+                                this%SourceFlows(cellNumber) =                  &
+                                  this%SourceFlows(cellNumber) +                &
+                                  this%ArrayBufferDbl(m)
+                            else if(this%ArrayBufferDbl(m) .lt. 0.0d0) then
+                                this%SinkFlows(cellNumber) =                    &
+                                  this%SinkFlows(cellNumber) +                  &
+                                  this%ArrayBufferDbl(m)
+                            end if
+                        end do
+                    end if
+                end if
              else if(header%Method .eq. 4) then
                 call this%BudgetReader%FillRecordDataBuffer(header,             &
                   this%ArrayBufferDbl, header%ArrayItemCount, spaceAssigned,    &
@@ -1163,7 +1195,7 @@ subroutine pr_FillCellBuffer(this, cellNumber, cellBuffer)
       case (1)
           ! Set cell buffer data for a structured grid
           call cellBuffer%SetDataStructured(cellNumber,this%Grid%CellCount,     &
-            this%Grid,this%IBound,this%IBoundTS(cellNumber),                    &
+            this%Grid,this%IBound,this%IBoundTS,                                &
             this%Porosity(cellNumber),this%Retardation(cellNumber),             & 
             this%StorageFlows(cellNumber),this%SourceFlows(cellNumber),         &
             this%SinkFlows(cellNumber), this%FlowsRightFace,                    &
@@ -1174,7 +1206,7 @@ subroutine pr_FillCellBuffer(this, cellNumber, cellBuffer)
           ! Set cell buffer data for a MODFLOW-USG unstructured grid
           call cellBuffer%SetDataUnstructured(cellNumber,this%Grid%CellCount,   &
             this%Grid%JaCount,this%Grid,                                        &
-            this%IBound,this%IBoundTS(cellNumber),                              &
+            this%IBound,this%IBoundTS,                                          &
             this%Porosity(cellNumber),this%Retardation(cellNumber),             & 
             this%StorageFlows(cellNumber),this%SourceFlows(cellNumber),         &
             this%SinkFlows(cellNumber), this%FlowsJA, boundaryFlows,            & 
@@ -1188,7 +1220,7 @@ subroutine pr_FillCellBuffer(this, cellNumber, cellBuffer)
           ! Set cell buffer data for a MODFLOW-6 structured grid (DIS)
           call cellBuffer%SetDataUnstructured(cellNumber,this%Grid%CellCount,   &
             this%Grid%JaCount,this%Grid,                                        &
-            this%IBound,this%IBoundTS(cellNumber),                              &
+            this%IBound,this%IBoundTS,                                          &
             this%Porosity(cellNumber),this%Retardation(cellNumber),             & 
             this%StorageFlows(cellNumber),this%SourceFlows(cellNumber),         &
             this%SinkFlows(cellNumber), this%FlowsJA, boundaryFlows,            & 
@@ -1198,7 +1230,7 @@ subroutine pr_FillCellBuffer(this, cellNumber, cellBuffer)
           ! Set cell buffer data for a MODFLOW-6 unstructured grid (DISV)
           call cellBuffer%SetDataUnstructured(cellNumber,this%Grid%CellCount,   &
             this%Grid%JaCount,this%Grid,                                        &
-            this%IBound,this%IBoundTS(cellNumber),                              &
+            this%IBound,this%IBoundTS,                                          &
             this%Porosity(cellNumber),this%Retardation(cellNumber),             & 
             this%StorageFlows(cellNumber),this%SourceFlows(cellNumber),         &
             this%SinkFlows(cellNumber), this%FlowsJA, boundaryFlows,            & 
@@ -1234,6 +1266,7 @@ subroutine pr_Reset(this)
    this%Grid => null()
    
    if(allocated(this%IBoundTS)) deallocate(this%IBoundTS)
+   if(allocated(this%ArrayBufferInt)) deallocate(this%ArrayBufferInt)
    if(allocated(this%Heads)) deallocate(this%Heads)
    if(allocated(this%FlowsJA)) deallocate(this%FlowsJA)
    if(allocated(this%FlowsRightFace)) deallocate(this%FlowsRightFace)
