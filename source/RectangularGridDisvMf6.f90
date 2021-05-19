@@ -2,38 +2,39 @@ module RectangularGridDisvMf6Module
   use UTL8MODULE
   use ModflowRectangularGridModule
   use GridLocationModule,only : GridLocationType
-  
+
   implicit none
-  
+
 ! Set default access status to private
   private
-    
+
 ! Public derived data type definitions
 !--------------------------------------
-! type: 
+! type:
 !--------------------------------------
   type, public, extends(ModflowRectangularGridType) :: RectangularGridDisvMf6Type
     integer,private :: Nlay, Ncpl, Nvert, Njavert, Nja
     integer,private :: PotentialConnectionCount
-    double precision :: RadAngle
-    double precision,private :: DegToRad
+    doubleprecision :: RadAngle
+    doubleprecision :: rotAngle, xPivot, yPivot
+    doubleprecision,private :: DegToRad
     integer,private,dimension(:),allocatable :: IDomain
     integer,private,dimension(:),allocatable :: JaVertOffset, JaVert, JaVertRect
     logical,private :: HasClippedCells
     doubleprecision,private,dimension(:),allocatable :: VertX, VertY
   contains
-    
+
     procedure :: CheckRectangular
     procedure :: GetIDomain
     procedure, private :: RectangularGridDisvMf6Init1
     generic :: ReadData => RectangularGridDisvMf6Init1
-    
+
   end type
 
     contains
 !---------------------------------------------------------------------
-!   Initialization procedures 
-!-------------------------------------------------------------------------    
+!   Initialization procedures
+!-------------------------------------------------------------------------
   subroutine RectangularGridDisvMf6Init1(this, iin, gridMetaUnit, iout)
   implicit none
   class(RectangularGridDisvMf6Type) :: this
@@ -41,23 +42,26 @@ module RectangularGridDisvMf6Module
 
   ! Read binary grid file
   call ReadGRB(this, iin, iout)
-  
+
   end subroutine RectangularGridDisvMf6Init1
 
   subroutine ReadGRB(grid, iin, iout)
   implicit none
   class(RectangularGridDisvMf6Type) :: grid
   integer,intent(in) :: iin, iout
-  integer :: ncells, nlay, nrow, ncol, ncpl, nvert, njavert, idummy, offset
-  integer :: version, ntxt, lentxt, ndat, ncom, lloc, istart, istop, n, i
+  integer :: ncells, nlay, nrow, ncol, ncpl, nvert, njavert, idummy, offset, v1
+  integer :: version, ntxt, lentxt, ndat, ncom, lloc, istart, istop, n, i, k, ipos, iavert, javert, nvcell
   doubleprecision :: radAngle, xcell, ycell, r
+  doubleprecision :: xPivot, yPivot, rotAngle, xtmp, ytmp, sin_theta, cos_theta, pi
   character*20 :: controlrecordflag
   character(len=50) :: headerLine
   character(len=100) :: line
   character(len=100),dimension(:),allocatable :: textLines
-  logical ::  isSmoothedRectangular
-  
-!   Deallocate arrays if they have been allocated previously  
+  logical ::  isSmoothedRectangular, isDisvSmoothed, isDisvRectangular
+
+  pi = 3.14159265358979
+
+!   Deallocate arrays if they have been allocated previously
     call grid%Reset()
 
 !   Read Header lines
@@ -66,31 +70,31 @@ module RectangularGridDisvMf6Module
     call urword(headerLine, lloc, istart, istop, 0, n, r, iout, iin)
     if(headerLine(istart:istop) .eq. 'GRID') then
         call urword(headerLine, lloc, istart, istop, 0, n, r, iout, iin)
-        if(headerLine(istart:istop) .ne. 'DISV') then 
+        if(headerLine(istart:istop) .ne. 'DISV') then
             call grid%Reset()
-            call ustop('Invalid binary grid type. Stop.')
+            call ustop('Invalid binary grid type (header line != DISV). Stop.')
         end if
-    else        
+    else
         call grid%Reset()
-        call ustop('Invalid binary grid file. Stop.')
+        call ustop('Invalid binary grid file (header line != GRID). Stop.')
     end if
-  
+
     read(iin) headerLine
-    lloc = 1 
+    lloc = 1
     call urword(headerLine, lloc, istart, istop, 0, n, r, iout, iin)
     if(headerLine(istart:istop) .eq. 'VERSION') then
         call urword(headerLine, lloc, istart, istop, 2, version, r, iout, iin)
-        if(version .ne. 1) then 
+        if(version .ne. 1) then
             call grid%Reset()
             call ustop('Unsupported binary grid file version. Stop.')
         end if
     else
         call grid%Reset()
-        call ustop('Invalid binary grid file. Stop.')        
+        call ustop('Invalid binary grid file (no VERSION header). Stop.')
     end if
-  
+
     read(iin) headerLine
-    lloc = 1 
+    lloc = 1
     call urword(headerLine, lloc, istart, istop, 0, n, r, iout, iin)
     if(headerLine(istart:istop) .eq. 'NTXT') then
         call urword(headerLine, lloc, istart, istop, 2, ntxt, r, iout, iin)
@@ -100,11 +104,11 @@ module RectangularGridDisvMf6Module
         !end if
     else
         call grid%Reset()
-        call ustop('Invalid binary grid file. Stop.')        
+        call ustop('Invalid binary grid file (header != NTXT). Stop.')
     end if
-  
+
     read(iin) headerLine
-    lloc = 1 
+    lloc = 1
     call urword(headerLine, lloc, istart, istop, 0, n, r, iout, iin)
     if(headerLine(istart:istop) .eq. 'LENTXT') then
         call urword(headerLine, lloc, istart, istop, 2, lentxt, r, iout, iin)
@@ -114,9 +118,9 @@ module RectangularGridDisvMf6Module
         end if
     else
         call grid%Reset()
-        call ustop('Invalid binary grid file. Stop.')        
+        call ustop('Invalid binary grid file (no LENTXT). Stop.')
     end if
-    
+
 ! Read data variable definition text lines
     allocate(textLines(ntxt))
     ncom = 0
@@ -131,7 +135,7 @@ module RectangularGridDisvMf6Module
             textlines(n) = line(istart:istop)
         end if
     end do
-    
+
 ! Read data variables
     ndat = 0
     do n = 1, ntxt
@@ -232,28 +236,33 @@ module RectangularGridDisvMf6Module
             case default
                 ! do nothing
         end select
-        
+
     end do
-    
-! Check to make sure all the required data variables were read    
+
+! Check to make sure all the required data variables were read
     n = ndat + ncom
     if(n .ne. ntxt) then
         call grid%Reset()
-        call ustop('Error reading binary grid file. Stop.')
+        call ustop('Error reading binary grid file (all variables not read). Stop.')
     end if
-    
+
 !   Set grid type flag
     grid%GridType = 4
+
+! Initialisation of rotation variables
+	grid%xPivot = 0.0d8
+	grid%yPivot = 0.0d8
+	grid%rotAngle = 0.0d8
 
 !   Allocate arrays
     allocate(grid%SaturatedTop(grid%CellCount))
     allocate(grid%LayerOffsets(grid%LayerCount + 1))
-    
+
     grid%LayerOffsets(1) = 0
     do n = 1, grid%LayerCount
         grid%LayerOffsets(n + 1) = grid%LayerOffsets(n) + grid%Ncpl
     end do
-    
+
     ! Compute the tops all layers other than layer 1
     do n = 2, grid%LayerCount
         offset = (n - 1) * grid%Ncpl
@@ -261,39 +270,77 @@ module RectangularGridDisvMf6Module
             grid%Top(offset + i) = grid%Bottom(offset + i - grid%Ncpl)
         end do
     end do
-    
+	
 !   Check for rectangular cell structure
-    call CheckRectangular(grid, isSmoothedRectangular)
-    if( .not. isSmoothedRectangular) then
-        call ustop('The binary grid contains data that is inconsistent with a rectangular DISV grid. Stop.')        
+    call CheckRectangular(grid, isSmoothedRectangular, isDisvSmoothed, isDisvRectangular)
+
+    if ( .not. isDisvRectangular) then
+        ! DISV Grid not rectangular, checking whether it is a rotated grid...'
+        ! First get pivot (1st & 2nd vertex always exist) & rotation angle 
+        xPivot = grid%VertX(1)
+		yPivot = grid%VertY(1)
+		rotAngle = 0.5*pi - atan((grid%VertX(2) - xPivot)/(grid%VertY(2) - yPivot)) 
+		!!
+        grid%xPivot = xPivot
+        grid%yPivot = yPivot
+        grid%rotAngle = rotAngle
+		!! Second, rotate the vertices & the cells
+        sin_theta = sin(-rotAngle)
+        cos_theta = cos(-rotAngle)
+        do i = 1, grid%Nvert
+            xtmp = (grid%VertX(i) - xPivot)*cos_theta - (grid%VertY(i) - yPivot)*sin_theta
+            ytmp = (grid%VertX(i) - xPivot)*sin_theta + (grid%VertY(i) - yPivot)*cos_theta
+            grid%VertX(i) = xtmp
+            grid%VertY(i) = ytmp
+        end do
+        ! 
+        do i = 1, grid%Ncpl
+            xtmp = (grid%CellX(i) - xPivot)*cos_theta - (grid%CellY(i) - yPivot)*sin_theta
+            ytmp = (grid%CellX(i) - xPivot)*sin_theta + (grid%CellY(i) - yPivot)*cos_theta
+            grid%CellX(i) = xtmp
+            grid%CellY(i) = ytmp
+        end do
+        ! Re-submit the grid
+        call CheckRectangular(grid, isSmoothedRectangular, isDisvSmoothed, isDisvRectangular)
+		
     end if
-    
+
+    deallocate(grid%JaVert)
+    deallocate(grid%JaVertOffset)
+    deallocate(grid%JaVertRect)
+    deallocate(grid%VertX)
+    deallocate(grid%VertY)
+
+    if( .not. isSmoothedRectangular) then
+        call ustop('The binary grid contains data that is inconsistent with a rectangular DISV grid. Stop.')
+    end if
+
     ! Assign connections to cell faces
     call grid%ComputeFaceAssignments()
-    
-  
+
+
   end subroutine ReadGRB
-  
+
 !---------------------------------------------------------------------
-!   Overriden procedures 
+!   Overriden procedures
 !----------------------------------------------------------------------
 !----------------------------------------------------------------------
   function GetGridType(this) result(gridType)
   implicit none
   class(RectangularGridDisvMf6Type) :: this
   integer :: gridType
-  
+
   gridType = 4
-  
+
   end function GetGridType
 !x------------------------------------------
   function GetIDomain(this, cellNumber) result(fval)
     class(RectangularGridDisvMf6Type) :: this
     integer,intent(in) :: cellNumber
     integer :: fval
-    
+
     fval = this%Idomain(cellNumber)
-    
+
   end function GetIDomain
 !------------------------------------------------------------------------
 !  End of overridden procedures
@@ -302,48 +349,48 @@ module RectangularGridDisvMf6Module
   function Distance(x1, y1, x2, y2) result(d)
   doubleprecision, intent(in) :: x1, x2, y1, y2
   doubleprecision :: d
-  
+
   d = sqrt((x2 - x1)**2 + (y2 - y1)**2)
-  
+
   end function Distance
-  
+
   function IsColinear(x1, y1, x2, y2, x3, y3, tol) result(fval)
   doubleprecision, intent(in) :: x1, x2, x3, y1, y2, y3, tol
   doubleprecision :: d1, d2, d3
   doubleprecision :: delta
   logical :: fval
-  
+
   d1 = Distance(x1, y1, x2, y2)
   d2 = Distance(x2, y2, x3, y3)
   d3 = Distance(x1, y1, x3, y3)
-  
+
   fval = .false.
   delta = abs((d3 - d1 - d2) / d3)
   if(delta .le. tol) fval = .true.
-  
-  end function IsColinear
-  
 
-  subroutine CheckRectangular(this, isSmoothedRectangular)
+  end function IsColinear
+
+  subroutine CheckRectangular(this, isSmoothedRectangular, isDisvSmoothed, isDisvRectangular)
   implicit none
   class(RectangularGridDisvMf6Type) :: this
-  logical,intent(inout) :: isSmoothedRectangular
+  logical,intent(inout) :: isSmoothedRectangular, isDisvSmoothed, isDisvRectangular
   integer :: m, n, i, k, cellPtCount, offset, rectOffset, ptCount, rectCount, v1, v2, v3, nJavert, midFaceCount
   integer :: failedCount
   integer,dimension(:),allocatable :: failedCellNumbers
   integer,dimension(4) :: tempVert, jx, jy
   integer,dimension(16) :: ix, iy
   doubleprecision :: d, x1, x2, x3, y1, y2, y3, tol, dx, dy
+
   logical :: isRectangular, isSmoothed, validAlignment
   data ix /1, 0, -1, 0, 0, -1, 0, 1, -1, 0, 1, 0, 0, 1, 0, -1/
   data iy /0, -1, 0, 1, -1, 0, 1, 0, 0, 1, 0, -1, 1, 0, -1, 0/
-  
+
   isSmoothedRectangular = .false.
-  isRectangular = .false.
-  isSmoothed = .false.
+  isDisvRectangular = .false.
+  isDisvSmoothed = .false.
   dx = 0.0
   dy = 0.0
-  
+
   if( .not. allocated(this%JavertOffset)) return
   if( .not. allocated(this%Javert)) return
   if( .not. allocated(this%VertX)) return
@@ -355,20 +402,20 @@ module RectangularGridDisvMf6Module
   do n = 1, this%Ncpl
       failedCellNumbers(n) = 0
   end do
-  
+
   nJavert = 4 * this%CellCount
   do n = 1, nJavert
       this%JavertRect(n) = 0
   end do
-  
+
   tol = 0.00001
   rectCount = 0
-  isSmoothed = .true.
+  isDisvSmoothed = .true.
   do n = 1, this%Ncpl
       offset = this%JavertOffset(n)
       rectOffset = (n - 1)*4
       cellPtCount = this%JavertOffset(n + 1) - offset
-      
+
       ! Step 1:
       !
       ! Loop through points to find all corner points. Count the mid-face points
@@ -382,15 +429,15 @@ module RectangularGridDisvMf6Module
           v1 = this%Javert(offset + i -1)
           x1 = this%VertX(v1)
           y1 = this%VertY(v1)
-          
+
           v2 = this%Javert(offset + i)
           x2 = this%VertX(v2)
           y2 = this%VertY(v2)
-          
+
           v3 = this%Javert(offset + i + 1)
           x3 = this%VertX(v3)
           y3 = this%VertY(v3)
-          
+
           if( .not. IsColinear(x1,y1, x2,y2, x3,y3, tol)) then
             ptCount = ptCount + 1
             if(ptCount .le. 4) this%JavertRect(rectOffset + ptCount) = v2
@@ -405,10 +452,10 @@ module RectangularGridDisvMf6Module
           end if
       end do
       ptCount = ptCount + 1
-      
+
       ! Step 2:
       !
-      ! If the cell has 5 corner points it is a quadrilateral (points 1 and 5 are the same). 
+      ! If the cell has 5 corner points it is a quadrilateral (points 1 and 5 are the same).
       ! If so, continue checking to see if it is a rectangle aligned with the x-y axes.
       if(ptCount .eq. 5) then
           ! Check for rectangularity and alignment with the x-y axes
@@ -448,7 +495,7 @@ module RectangularGridDisvMf6Module
           if(dy .lt. -tol) jy(4) = -1
           if(dx .gt. tol) jx(4) = 1
           if(dx .lt. -tol) jx(4) = -1
-          
+
           do m = 1, 4
               k = 0
               validAlignment = .true.
@@ -464,14 +511,14 @@ module RectangularGridDisvMf6Module
               end do
               if(k .gt. 0) exit
           end do
-          
+
           ! If k > 0 means that the cell is a rectangle aligned with the x-y axes. If so, increment the valid cell count
           ! and reorder the vertex points of the cell, if necessary, so that the first vertex point is the vertex
-          ! corresponding to the upper left corner of the cell. 
+          ! corresponding to the upper left corner of the cell.
           if(k .gt. 0) then
-            
-            ! The value of k is the element number of the vertex point that is the upper left corner of the cell. 
-            ! The calculations in step 3 below require the upper left corner point to be the first point in the 
+
+            ! The value of k is the element number of the vertex point that is the upper left corner of the cell.
+            ! The calculations in step 3 below require the upper left corner point to be the first point in the
             ! list for the cell. If k > 1, construct a temporary array containing the new vertex order that can
             ! be used to reorder the JavertRect elements for the cell.
             select case (k)
@@ -493,7 +540,7 @@ module RectangularGridDisvMf6Module
             case default
             ! no reordering is required
             end select
-            
+
             ! If k > 1, use the tempVert array to assign the new vertex order for the cell to the
             ! elements of the JavertRect array
             if(k .gt. 1) then
@@ -501,27 +548,27 @@ module RectangularGridDisvMf6Module
                     this%JavertRect(rectOffset + i) = tempVert(i)
                 end do
             end if
-            
+
             ! Increment rectCount to indicate that the cell is a rectangle aligned with the x-y axes.
             rectCount = rectCount + 1
-            
+
           else
               failedCount = failedCount +1
               failedCellNumbers(failedCount) = n
           end if
       else
-              failedCount = failedCount +1
-              failedCellNumbers(failedCount) = n
+          failedCount = failedCount +1
+          failedCellNumbers(failedCount) = n
       end if
-      
+
   end do
-  
+
   ! Step 3:
   !
   ! If all of the cells pass the rectangularity check, finish processing the grid data.
   if(rectCount .eq. this%Ncpl) then
-      isRectangular = .true.
-     
+      isDisvRectangular = .true.
+
      ! Allocate DelX and DelY arrays. Also recompute CellX and CellY from the vertex coordinates to
      ! be sure the CellX and CellY are exactly consistent with the vertex coordinates (which may have
      ! been rotated. This also assures that the cell coordinates represents cell-centered node points.
@@ -549,23 +596,14 @@ module RectangularGridDisvMf6Module
              end do
          end if
      end do
-     
+
   end if
-  
+
   ! Step 4:
   !
   ! Set the isSmoothedRectangular flag based on the results of the check
-  if(isRectangular .and. isSmoothed) isSmoothedRectangular = .true.
+  if(isDisvRectangular .and. isDisvSmoothed) isSmoothedRectangular = .true.
 
-  ! Step 5:
-  !
-  ! Deallocate grid arrays that are no longer needed
-  deallocate(this%JaVert)
-  deallocate(this%JaVertOffset)
-  deallocate(this%JaVertRect)
-  deallocate(this%VertX)
-  deallocate(this%VertY)
-  
   end subroutine CheckRectangular
 
 
