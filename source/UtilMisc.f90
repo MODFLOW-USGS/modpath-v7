@@ -206,4 +206,27 @@ end subroutine ulog
       END DO
    END SUBROUTINE  Sort
 
+! --------------------------------------------------------------------
+! SUBROUTINE  rotate_pivot():
+!    This subroutine takes point coordinates and modifies them according to (x,y)Pivot
+! and rotAngle (in radians).
+! --------------------------------------------------------------------
+
+  subroutine rotate_pivot(xPivot, yPivot, rotAngle, modelX, modelY)
+  doubleprecision,intent(in) :: xPivot, yPivot, rotAngle
+  doubleprecision,intent(inout) :: modelX, modelY
+  doubleprecision :: tmpX, tmpY
+  
+  tmpX = modelX*cos(rotAngle) - modelY*sin(rotAngle)
+  tmpY = modelX*sin(rotAngle) + modelY*cos(rotAngle)
+  
+  modelX = tmpX + xPivot
+  modelY = tmpY + yPivot
+
+  end subroutine rotate_pivot
+
+
+
+
+
 end module UtilMiscModule
