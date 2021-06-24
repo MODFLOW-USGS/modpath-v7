@@ -1,11 +1,21 @@
 !  MPath7.f90 
 !  PROGRAM: MPath7
 
+!  This software is preliminary or provisional and is subject to revision.       ! kluge provisional
+!  It is being provided to meet the need for timely best science. The software
+!  has not received final approval by the U.S. Geological Survey (USGS).
+!  No warranty, expressed or implied, is made by the USGS or the U.S. Government
+!  as to the functionality of the software and related material nor shall the
+!  fact of release constitute any such warranty. The software is provided on
+!  the condition that neither the USGS nor the U.S. Government shall be held
+!  liable for any damages resulting from the authorized or unauthorized use of
+!  the software.
+
     program MPath7
 !*********************************************************************************
 ! Main program code for USGS MODPATH particle tracking model - Version 7
 !
-!   Specifiactions:
+!   Specifications:
 !---------------------------------------------------------------------------------
     use GlobalDataModule,only : niunit, narealsp, issflg, nper, mpbasUnit,      &
         disUnit, tdisUnit, gridMetaUnit, headUnit, headuUnit, budgetUnit,        &
@@ -83,7 +93,7 @@
     integer,dimension(:),allocatable :: buffer
     doubleprecision :: t, stoptime, maxTime, tsMax, time
     character(len=132) message
-    character(len=10) version
+    character(len=20) version
     character(len=75) terminationMessage
     character(len=80) compilerVersionText
     logical :: isTimeSeriesPoint, timeseriesRecordWritten
@@ -91,7 +101,8 @@
 !---------------------------------------------------------------------------------
     
     ! Set version
-    version = '7.2.001'
+!!    version = '7.2.002'
+    version = '7.2.002 PROVISIONAL'    ! kluge provisional
     
     call get_compiler(compilerVersionText)
     write(*,'(1x/a,a)') 'MODPATH Version ', version
