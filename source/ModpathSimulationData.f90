@@ -23,6 +23,7 @@ module ModpathSimulationDataModule
     integer :: ReferenceTimeOption
     integer :: StoppingTimeOption
     integer :: BudgetOutputOption
+    integer :: TimeseriesOutputOption
     integer :: PathlineFormatOption
     integer :: ZoneDataOption
     integer :: RetardationFactorOption
@@ -145,6 +146,14 @@ contains
   ! Trace mode
   call urword(line, icol, istart, istop, 2, n, r, 0, 0)
   this%TraceMode = n
+
+  ! Timeseries output option
+  call urword(line, icol, istart, istop, 2, n, r, 0, 0)
+  if (istart.eq.len(line)) then
+    this%TimeseriesOutputOption = 0
+  else
+    this%TimeseriesOutputOption = n
+  end if
   
   ! Pathline format option (hardwire value 1 = consolidate)
   this%PathlineFormatOption = 1
@@ -258,6 +267,16 @@ contains
     case default
       call ustop('Invalid weak source option.')
     end select
+
+  ! Weak sink option
+  select case(this%TimeseriesOutputOption)
+    case (0)
+      write(outUnit, '(A)') 'Timeseries output for active particles only (Timeseries output option = 0)'
+    case (1)
+      write(outUnit,'(A)') 'Timeseries output for all particles (Timeseries output option = 1)'
+    case default
+      call ustop('Invalid timeseries output option.')
+  end select
   
     ! Reference time option
     read(inUnit, '(a)') line

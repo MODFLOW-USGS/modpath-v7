@@ -86,6 +86,7 @@
     character(len=10) version
     character(len=75) terminationMessage
     character(len=80) compilerVersionText
+    logical :: isTimeSeriesPoint, timeseriesRecordWritten
     
 !---------------------------------------------------------------------------------
     
@@ -526,19 +527,21 @@
       end if
     end if
     
-    ! If simulation type is TIMESERIES, write initial locations of all particles active at tracking time = 0
+    ! If simulation type is TIMESERIES, write initial locations of all particles active at tracking time = 0,
+    ! or all particles regardless of status if that option is set
     if((simulationData%SimulationType .ge.3) .and. (ktime .eq. kfirst)) then
         do groupIndex =1, simulationData%ParticleGroupCount
             do particleIndex = 1, simulationData%ParticleGroups(groupIndex)%TotalParticleCount
                 ! Add code
                   p => simulationData%ParticleGroups(groupIndex)%Particles(particleIndex)
-                  if((p%Status .eq. 0) .and. (p%InitialTrackingTime .eq. 0.0d0)) then
+                  if(((p%Status .eq. 0) .and. (p%InitialTrackingTime .eq. 0.0d0)) .or.    &
+                     (simulationData%TimeseriesOutputOption .eq. 1) )then
                       pCoord%CellNumber = p%CellNumber
                       pCoord%Layer = p%Layer
                       pCoord%LocalX = p%LocalX
                       pCoord%LocalY = p%LocalY
                       pCoord%LocalZ = p%LocalZ
-                      pCoord%TrackingTime = p%TrackingTime
+                      pCoord%TrackingTime = 0.0d0
                       call modelGrid%ConvertToModelXYZ(pCoord%CellNumber,        &
                         pCoord%LocalX, pCoord%LocalY, pCoord%LocalZ,            &
                         pCoord%GlobalX, pCoord%GlobalY, pCoord%GlobalZ)
@@ -565,6 +568,7 @@
     
     itend = 1
     maxTime = tsMax
+    isTimeSeriesPoint = .false.
     if(simulationData%SimulationType .gt. 1) then     
         ! For timeseries and pathline runs, find out if maxTime should be set to the value of the
         ! next time point or the time at the end of the time step
@@ -575,6 +579,7 @@
               tPoint(1) = maxTime
               itend = 0
               if(maxTime .eq. tsMax) itend = 1
+              isTimeSeriesPoint = .true.
             end if
         end if
     end if
@@ -585,14 +590,15 @@
     if(simulationData%ParticleGroupCount .gt. 0) then
         do groupIndex = 1, simulationData%ParticleGroupCount
             do particleIndex = 1, simulationData%ParticleGroups(groupIndex)%TotalParticleCount
+                timeseriesRecordWritten = .false.
                 p => simulationData%ParticleGroups(groupIndex)%Particles(particleIndex)
-                ! Check particle status. 
-                ! Skip over particles unless they are active or pending release         
-                if(p%Status .gt. 1) then
-                    ! Add code here later to deal with advective observations
-                    ! For now, just cycle to the next particle
-                    cycle
-                end if
+!!                ! Check particle status. 
+!!                ! Skip over particles unless they are active or pending release.
+!!                if(p%Status .gt. 1) then
+!!                    ! Add code here later to deal with advective observations
+!!                    ! For now, just cycle to the next particle
+!!                    cycle
+!!                end if
                 
                 ! Check to see if trace mode should be turned on for this particle
                 traceModeOn = .false.
@@ -710,10 +716,29 @@
                             pCoordTP => trackPathResult%ParticlePath%Timeseries%Items(1)
                             call WriteTimeseriesRecord(p%SequenceNumber, p%ID,  &
                               groupIndex, ktime, nt, pCoordTP, geoRef, timeseriesUnit)
+                            timeseriesRecordWritten = .true.
                         end if
                     end if
                 end if
                 
+                ! If option is set to write timeseries records for all particles
+                ! regardless of status, write the record if not done already.
+                if((simulationData%SimulationType .ge. 3) .and.                   &
+                   (simulationData%TimeseriesOutputOption .eq. 1) .and.           &
+                   (isTimeSeriesPoint) .and. (.not.timeseriesRecordWritten)) then
+                      pCoord%CellNumber = p%CellNumber
+                      pCoord%Layer = p%Layer
+                      pCoord%LocalX = p%LocalX
+                      pCoord%LocalY = p%LocalY
+                      pCoord%LocalZ = p%LocalZ
+                      pCoord%TrackingTime = maxTime
+                      call modelGrid%ConvertToModelXYZ(pCoord%CellNumber,       &
+                        pCoord%LocalX, pCoord%LocalY, pCoord%LocalZ,            &
+                        pCoord%GlobalX, pCoord%GlobalY, pCoord%GlobalZ)
+                      call WriteTimeseriesRecord(p%SequenceNumber, p%ID,        &
+                        groupIndex, ktime, nt, pCoord, geoRef, timeseriesUnit)
+                end if
+
             end do
         end do
     end if
