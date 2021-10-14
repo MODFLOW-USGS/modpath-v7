@@ -768,12 +768,16 @@ module BudgetReaderModule
       
       call TrimAll(header%TextLabel,firstChar,lastChar,trimmedLength)
       if(header%TextLabel(firstChar:lastChar) .eq. 'FLOW JA FACE') then
+        if ((header%Method .eq. 0) .or. (header%Method .eq. 1)) then
            hasFlowJA = .true.
            this%FlowArraySize = header%ColumnCount
+        end if
       end if
       if(header%TextLabel(firstChar:lastChar) .eq. 'FLOW-JA-FACE') then
+        if ((header%Method .eq. 0) .or. (header%Method .eq. 1)) then
            hasFlowJA = .true.
            this%FlowArraySize = header%ColumnCount
+        end if
       end if
       if(header%TextLabel(firstChar:lastChar) .eq. 'FLOW FRONT FACE') then
            hasFlowFrontOrRightFace = .true.
