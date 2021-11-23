@@ -14,6 +14,8 @@ module ParticleTrackingEngineModule
   use ParticleTrackingOptionsModule,only : ParticleTrackingOptionsType
   use BudgetRecordHeaderModule,only : BudgetRecordHeaderType
   use UtilMiscModule,only : TrimAll
+  use UTL8MODULE,only : ustop
+
 !  use ModpathUnstructuredBasicDataModule,only : ModpathUnstructuredBasicDataType
   implicit none
   
@@ -711,13 +713,20 @@ subroutine pr_LoadTimeStep(this, stressPeriod, timeStep)
     boundaryFlowsOffset, listItemBufferSize, cellNumber, layer
   type(BudgetRecordHeaderType) :: header
   character(len=16) :: textLabel
+  character(len=132) message
   doubleprecision :: top 
   real :: HDryTol, HDryDiff
 !---------------------------------------------------------------------------------------------------------------
   
   call this%ClearTimeStepBudgetData()
   call this%BudgetReader%GetRecordHeaderRange(stressPeriod, timeStep, firstRecord, lastRecord)
-  if(firstRecord .eq. 0) return
+!!  if(firstRecord .eq. 0) return
+  if(firstRecord .eq. 0) then
+    write(message,'(A,I5,A,I5,A)') ' Error loading Time Step ', timeStep, ' Period ', stressPeriod, '.'
+    message = trim(message)
+    write(*,'(A)') message
+    call ustop('Missing budget information. Budget file must have output for every time step. Stop.')
+  end if
 
   cellCount = this%Grid%CellCount
   listItemBufferSize = size(this%ListItemBuffer)
