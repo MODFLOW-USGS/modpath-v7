@@ -295,7 +295,7 @@ module BudgetReaderModule
   integer,intent(inout) :: spaceAssigned,status
   doubleprecision,intent(inout),dimension(bufferSize) :: buffer
   integer,intent(inout),dimension(bufferSize) :: indexBuffer
-  integer :: n, requiredSize, ncpl, layer
+  integer :: n, requiredSize, index
   integer(kind=8) :: position
   real(kind=4) :: valueSingle
   
@@ -321,8 +321,7 @@ module BudgetReaderModule
   end if
   
   ! Find the buffer size that is needed to hold the data
-  ncpl = header%RowCount * header%ColumnCount
-  requiredSize = ncpl
+  requiredSize = header%RowCount * header%ColumnCount
   
   ! Check to see if the buffer is large enough to hold the data. If not, set status = 3 and return
   if(requiredSize .gt. bufferSize) then
@@ -340,9 +339,9 @@ module BudgetReaderModule
           read(this%FileUnit,pos=position,err=100) 
           
           do n = 1, requiredSize
-              read(this%FileUnit,err=100) layer
-              ! compute and store cell number in indexBuffer
-              indexBuffer(n) = (layer - 1)*ncpl + n
+              read(this%FileUnit,err=100) index
+              ! compute and store index number in indexBuffer
+              indexBuffer(n) = index
           end do
           
           do n = 1, requiredSize
@@ -355,9 +354,9 @@ module BudgetReaderModule
           read(this%FileUnit,pos=position,err=100) 
           
           do n = 1, requiredSize
-              read(this%FileUnit,err=100) layer
-              ! compute and store cell number in indexBuffer
-              indexBuffer(n) = (layer - 1)*ncpl + n
+              read(this%FileUnit,err=100) index
+              ! compute and store index number in indexBuffer
+              indexBuffer(n) = index
           end do
           
           do n = 1, requiredSize

@@ -978,7 +978,14 @@ subroutine pr_LoadTimeStep(this, stressPeriod, timeStep)
                     call this%CheckForDefaultIface(header%TextLabel, iface)
                     if(iface .gt. 0) then
                         do m = 1, spaceAssigned
-                            cellNumber = this%ArrayBufferInt(m)
+                            if(this%Grid%GridType .ne. 2) then
+                              ! structured
+                              layer = this%ArrayBufferInt(m)
+                              cellNumber = (layer - 1) * spaceAssigned + m
+                            else
+                              ! mfusg unstructured
+                              cellNumber = this%ArrayBufferInt(m)
+                            end if
                             boundaryFlowsOffset = 6 * (cellNumber - 1)
                             this%BoundaryFlows(boundaryFlowsOffset + iface) =   &
                               this%BoundaryFlows(boundaryFlowsOffset + iface) + &
