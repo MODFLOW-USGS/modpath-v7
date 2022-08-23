@@ -253,6 +253,9 @@ contains
               case('TIME_UNITS')
                   call urword(line, lloc, istart, istop, 1, nval, rval, 0, 0)
                   ! Ignore the time units parameter for now.
+              case('START_DATE_TIME')
+                  call urword(line, lloc, istart, istop, 1, nval, rval, 0, 0)
+                  ! Ignore the starting date and time parameter for now.
               case('END','BEGIN')
                   call uterminate_block(inUnit, outUnit, line(istart:istop), 'OPTIONS', lloc, line, ierr)
                   if(ierr .eq. 0) exit
