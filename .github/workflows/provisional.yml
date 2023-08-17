@@ -1,0 +1,144 @@
+name: Provisional distribution
+on:
+  # schedule:
+  #   - cron: '0 3 * * 3' # run at 3 AM UTC every Wednesday
+  push:
+    branches:
+      - develop
+jobs:
+  build:
+    name: Build provisional distribution
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-20.04, macos-12, windows-2022]
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup Intel Fortran
+        uses: modflowpy/install-intelfortran-action@v1
+
+      # - name: Setup Intel Fortran
+      #   uses: awvwgk/setup-fortran@main
+      #   with:
+      #     compiler: intel-classic
+      #     version: 2021.7.0
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.9
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install https://github.com/modflowpy/pymake/zipball/master
+          pip install modflow-devtools
+          pip list
+    
+      - name: Get OS tag
+        id: get-ostag
+        shell: python
+        run: |
+          from os import environ
+          from modflow_devtools.ostags import get_modflow_ostag
+          with open(environ.get("GITHUB_OUTPUT"), "a") as f:
+            f.write(f"ostag={get_modflow_ostag()}")
+    
+      - name: Get date
+        uses: josStorer/get-current-time@v2
+        id: current-time
+        with:
+          format: YYYYMMDD
+
+      - name: Get short SHA
+        uses: benjlevesque/short-sha@v2.2
+        id: short-sha
+      
+      - name: Get exe name
+        id: exe-name
+        run: echo "name=mp7_${{ steps.get-ostag.outputs.ostag }}_${{ steps.current-time.outputs.formattedTime }}_${{ steps.short-sha.outputs.sha }}" >> $GITHUB_OUTPUT
+
+      - name: Build executable
+        if: runner.os != 'Windows'
+        run: mfpymake source ${{ steps.exe-name.outputs.name }} -ad msvs/bin_PROVISIONAL -fc ifort
+
+      - name: Build executable (Windows)
+        if: runner.os == 'Windows'
+        shell: cmd
+        run: mfpymake source ${{ steps.exe-name.outputs.name }}.exe -ad msvs\bin_PROVISIONAL -fc ifort
+
+      - name: Upload executable
+        if: runner.os != 'Windows'
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ steps.exe-name.outputs.name }}
+          path: msvs/bin_PROVISIONAL/${{ steps.exe-name.outputs.name }}
+    
+      - name: Upload executable (Windows)
+        if: runner.os == 'Windows'
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ steps.exe-name.outputs.name }}
+          path: msvs/bin_PROVISIONAL/${{ steps.exe-name.outputs.name }}.exe
+      
+  commit:
+    name: Commit and push executable
+    # if: github.repository_owner == 'MODFLOW-USGS'
+    needs: build
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+    defaults:
+      run:
+        shell: bash
+    steps:
+
+      - name: Checkout repo
+        uses: actions/checkout@v3
+      
+      - name: Remove old binaries
+        working-directory: msvs/bin_PROVISIONAL
+        if: runner.os == 'Linux'
+        run: rm -rf mp7*
+
+      - name: Download binaries
+        uses: actions/download-artifact@v3
+        with:
+          path: msvs/bin_PROVISIONAL
+      
+      - name: Get short SHA
+        uses: benjlevesque/short-sha@v2.2
+        id: short-sha
+
+      - name: Commit and push
+        working-directory: msvs/bin_PROVISIONAL
+        if: runner.os == 'Linux'
+        run: |
+          # configure git
+          git config core.sharedRepository true
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          echo "shortening nested dir names"
+          date=$(date +%Y%m%d)
+          find mp7* -type d | sed -e "p;s/_$date.*$//" | xargs -n2 mv
+
+          echo "moving exes to top-level bin dir"
+          for file in mp7*/*; do
+            mv $file $(basename $file)
+          done
+
+          echo "removing empty nested dirs"
+          find mp7* -type d -delete
+
+          # commit and push
+          git add .
+          git commit -m "add binaries built from ${{ github.sha }}"
+          git push origin "${{ github.ref_name }}"

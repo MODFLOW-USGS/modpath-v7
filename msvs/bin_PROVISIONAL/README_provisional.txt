@@ -8,8 +8,16 @@ the condition that neither the USGS nor the U.S. Government shall be held
 liable for any damages resulting from the authorized or unauthorized use of
 the software.
 
-The preliminary executable code is provided temporarily for evaluation purposes
-as a courtesy to users who are unable to compile the source code. Only a 64-bit
-Windows executable is provided. The name of the executable file references
-the MODPATH 7 github repository commit number on which the executable is
-based. The executable will not necessarily be updated after every commit.
+The provisional executable codes are provided temporarily for evaluation purposes
+as a courtesy to users who are unable to compile the source code. An executable
+compiled for a specific operating system might not be compatible with all
+distributions of that operating system. In such cases, we ask that users please
+work through any compatibility issues related to compilation. If there is evidence
+of a problem with the source code, please report it as an issue on this repository.
+
+The name of an executable file includes the operating system for which is compiled,
+date it was generated, and the "develop" branch commit it is based on.  For example,
+the name "mp7_win64_20230816_dbe916c" indicates that the executable is for 64-bit
+Windows and was generated on 2023-08-16 using source code from commit dbe916c.
+If there are multiple executables for a given operating system, the most recent
+for that operating system is the one with the most recent date and commit number.
