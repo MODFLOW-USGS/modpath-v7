@@ -72,8 +72,8 @@ contains
   ! If the layer is convertible, set dz = Head - Bottom if Head < Top
   if(this%LayerType .eq. 1) then
       if(this%Head .lt. this%Top) dz = this%Head - this%Bottom
-      ! If dz < 0, set dz to an arbitrary, small positive value
-      if(dz .lt. 0.0d0) dz = 1.0d-4
+      ! If dz <= 0, set dz to an arbitrary, small positive value
+      if(dz .le. 0.0d0) dz = 1.0d-4
   end if
   
   end function pr_GetDZ
