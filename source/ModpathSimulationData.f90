@@ -148,13 +148,20 @@ contains
   this%TraceMode = n
 
   ! Timeseries output option
-  call urword(line, icol, istart, istop, 2, n, r, 0, 0)
-  if (istart.eq.len(line)) then
+  call urword(line, icol, istart, istop, 2, n, r, -1, 0)
+  ! If error while reading the last option (could be triggered by # comments ) 
+  if ( line(len(line):len(line)).eq.'E' ) then
+    ! Continue as zero
     this%TimeseriesOutputOption = 0
   else
-    this%TimeseriesOutputOption = n
+    ! Read from input
+    if (istart.eq.len(line)) then
+      this%TimeseriesOutputOption = 0
+    else
+      this%TimeseriesOutputOption = n
+    end if
   end if
-  
+
   ! Pathline format option (hardwire value 1 = consolidate)
   this%PathlineFormatOption = 1
   
@@ -268,7 +275,7 @@ contains
       call ustop('Invalid weak source option.')
     end select
 
-  ! Weak sink option
+  ! Timeseries output option
   select case(this%TimeseriesOutputOption)
     case (0)
       write(outUnit, '(A)') 'Timeseries output for active particles only (Timeseries output option = 0)'
